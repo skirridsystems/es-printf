@@ -1,6 +1,6 @@
 /*************************************************************************
 
-      Copyright (c) Skirrid Systems 2006 - 2009
+      Copyright (c) Skirrid Systems 2006 - 2012
 
      Module Name: printf.c
     Description : Cut-down version of printf for embedded use.
@@ -20,19 +20,33 @@ Trailing space padding can be specified for strings in the same way.
 Any other character following the percentage sign is passed through unchanged.
 
 This version supports integers, but not longs.
-
-This is part of the common file set for the network lighting system.
-It should be #included in the application driver code file.
-See the example in the Templates folder.
 ******************************************************************************/
 
 // System and config header files are included by the parent stub file.
 #include <stdarg.h>
-#include "hardware.h"
-#include "uart.h"
+#include "printf.h"
+#include "printf_cfg.h"
 
-#define PUTCHAR_FUNC    UARTSendByte
+/* Define default macro to access the format string using a pointer. */
+#ifndef GET_FORMAT
+    #define GET_FORMAT(p)   (*(p))
+#endif
 
+/* Define default function for printf output. */
+#ifndef PUTCHAR_FUNC
+    #define PUTCHAR_FUNC    putchar
+#endif
+
+/* Renames the functions if they have been defined as macros in printf.h */
+#ifdef printf
+    #undef  printf
+    #define printf printf_rom
+#endif
+
+#ifdef sprintf
+    #undef  sprintf
+    #define sprintf sprintf_rom
+#endif
 
 #define BUFLEN  16      // Size of buffer for formatting numbers into
 
@@ -51,7 +65,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
 
     buffer[BUFLEN-1] = '\0';
 
-    while ((convert = pgm_read_byte(fmt)) != 0)
+    while ((convert = GET_FORMAT(fmt)) != 0)
     {
         p = buffer + BUFLEN - 1;
         width = 0;
@@ -60,16 +74,16 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
 
         if (convert == '%')
         {
-            convert = pgm_read_byte(++fmt);
+            convert = GET_FORMAT(++fmt);
             if (convert == '0')
             {
                 pad_char = '0';
-                convert = pgm_read_byte(++fmt);
+                convert = GET_FORMAT(++fmt);
             }
             while (convert >= '0' && convert <= '9')
             {
                 width = width * 10 + convert - '0';
-                convert = pgm_read_byte(++fmt);
+                convert = GET_FORMAT(++fmt);
             }
 
             switch (convert)
@@ -144,7 +158,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
 }
 
 // Output a single character performing LF to CRLF conversion.
-void putchar(char c)
+void printf_func(char c)
 {
     if (c == '\n')
         PUTCHAR_FUNC('\r');
@@ -152,20 +166,20 @@ void putchar(char c)
 }
 
 // printf replacement - writes to serial output using putchar.
-int printf_rom(const char *fmt, ...)
+int printf(const char *fmt, ...)
 {
     va_list ap;
     int Count;
 
     va_start(ap, fmt);
-    Count = doprnt((char *)0, putchar, fmt, ap);
+    Count = doprnt((char *)0, printf_func, fmt, ap);
     va_end(ap);
     
     return Count;
 }
 
 //  sprintf replacement - writes into buffer supplied.
-int sprintf_rom(char *buf, const char *fmt, ... )
+int sprintf(char *buf, const char *fmt, ... )
 {
     va_list ap;
     int Count;
