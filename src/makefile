@@ -12,6 +12,7 @@
 MCU = atmega8
 TRG = Test
 SRC = test.c
+INC = printf.c printf.h printf_cfg.h
 
 # Tool chain used for this project.
 AVRGCC = /winavr-20070525
@@ -47,7 +48,7 @@ OBJ = $(addprefix $(OUT)/,$(SRC:.c=.o))
 #-----------------------------------------------------------------
 
 # Implicit rules for creating object from source.
-$(OUT)/%.o : %.c makefile
+$(OUT)/%.o : %.c makefile $(INC)
 	$(CC) -c $(CPFLAGS) -I. $*.c -o $@
 
 #-----------------------------------------------------------------
@@ -70,7 +71,7 @@ $(OUT)/$(TRG).elf: $(OBJ)
 	$(AVRSIZE) $@
 
 # Generate PC executable
-$(TRG).exe: $(SRC) makefile
+$(TRG).exe: $(SRC) $(INC) makefile
 	$(PC_GCC) -o $@ $(SRC)
 
 #---------------------- MAKE CLEAN -------------------------------
