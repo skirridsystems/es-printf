@@ -157,14 +157,6 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
     return count;
 }
 
-// Output a single character performing LF to CRLF conversion.
-void printf_func(char c)
-{
-    if (c == '\n')
-        PUTCHAR_FUNC('\r');
-    PUTCHAR_FUNC(c);
-}
-
 // printf replacement - writes to serial output using putchar.
 int printf(const char *fmt, ...)
 {
@@ -172,7 +164,7 @@ int printf(const char *fmt, ...)
     int Count;
 
     va_start(ap, fmt);
-    Count = doprnt((char *)0, printf_func, fmt, ap);
+    Count = doprnt((char *)0, (void (*)(char))PUTCHAR_FUNC, fmt, ap);
     va_end(ap);
     
     return Count;
