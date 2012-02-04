@@ -49,7 +49,7 @@ This version supports integers, but not longs.
     #define sprintf sprintf_rom
 #endif
 
-#define BUFLEN  16      // Size of buffer for formatting numbers into
+#define BUFMAX  16      // Size of buffer for formatting numbers into
 
 #define FL_LEFT_JUST    (1<<0)
 #define FL_ZERO_PAD     (1<<1)
@@ -65,15 +65,15 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
     char sign_char;
     char convert, c;
     char *p;
-    char buffer[BUFLEN];
+    char buffer[BUFMAX+1];
     int  count = 0;
     unsigned char flags;
 
-    buffer[BUFLEN-1] = '\0';
+    buffer[BUFMAX] = '\0';
 
     while ((convert = GET_FORMAT(fmt)) != 0)
     {
-        p = buffer + BUFLEN - 1;
+        p = buffer + BUFMAX;
         width = 0;
         sign_char = 0;
         flags = 0;
@@ -108,6 +108,12 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                     break;
             }
             // Extract width
+            if (convert == '*')
+            {
+                width = va_arg(ap, int);
+                convert = GET_FORMAT(++fmt);
+            }
+            else
             while (convert >= '0' && convert <= '9')
             {
                 width = width * 10 + convert - '0';
@@ -148,6 +154,8 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 else            flags &= ~FL_SPECIAL;
                 // Generate the number without any prefix yet.
                 fwidth = width;
+                // Avoid formatting buffer overflow.
+                if (fwidth > BUFMAX) fwidth = BUFMAX;
                 if (uvalue == 0)
                 {
                     // Avoid printing 0 as ' '
