@@ -53,6 +53,7 @@ This version supports integers, but not longs.
 
 #define FL_LEFT_JUST    (1<<0)
 #define FL_ZERO_PAD     (1<<1)
+#define FL_SPECIAL      (1<<2)
 
 static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
 {
@@ -99,6 +100,10 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 {
                     sign_char = ' ';
                 }
+                else if (convert == '#')
+                {
+                    flags |= FL_SPECIAL;
+                }
                 else
                     break;
             }
@@ -130,8 +135,10 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 base = 10;
                 goto number;
             case 'x':
+            case 'X':
                 uvalue = va_arg(ap, unsigned);
                 base = 16;
+                sign_char = 0;
             number:
                 // Generate the number without any prefix yet.
                 fwidth = width;
@@ -144,13 +151,24 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 while (uvalue)
                 {
                     c = (char) ((uvalue % base) + '0');
-                    if (c > '9') c += 'A' - '0' - 10;   // Hex digits
+                    if (c > '9')
+                    {
+                        // Hex digits
+                        if (convert == 'X') c += 'A' - '0' - 10;
+                        else                c += 'a' - '0' - 10;
+                    }
                     *--p = c;
                     uvalue /= base;
                     --fwidth;
                 }
                 // Allocate space for the sign bit.
                 if (sign_char) --fwidth;
+                // Allocate space for special chars if required.
+                if (flags & FL_SPECIAL)
+                {
+                    if (convert == 'x' || convert == 'X') fwidth -= 2;
+                    else flags &= ~FL_SPECIAL;
+                }
                 // Add leading zero padding if required.
                 if ((flags & FL_ZERO_PAD) && !(flags & FL_LEFT_JUST))
                 {
@@ -159,6 +177,12 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                         *--p = '0';
                         --fwidth;
                     }
+                }
+                // Add special prefix if required.
+                if (flags & FL_SPECIAL)
+                {
+                    *--p = convert;
+                    *--p = '0';
                 }
                 // Add the sign prefix
                 if (sign_char) *--p = sign_char;
