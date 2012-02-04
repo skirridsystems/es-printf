@@ -137,14 +137,15 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
             case 'o':
                 uvalue = va_arg(ap, unsigned);
                 base = 8;
-                sign_char = 0;
                 goto number;
             case 'x':
             case 'X':
                 uvalue = va_arg(ap, unsigned);
                 base = 16;
-                sign_char = 0;
             number:
+                // Make sure options are valid.
+                if (base != 10) sign_char = 0;
+                else            flags &= ~FL_SPECIAL;
                 // Generate the number without any prefix yet.
                 fwidth = width;
                 if (uvalue == 0)
@@ -171,9 +172,8 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 // Allocate space for special chars if required.
                 if (flags & FL_SPECIAL)
                 {
-                    if (convert == 'x' || convert == 'X') fwidth -= 2;
-                    else if (convert == 'o') fwidth -= 1;
-                    else flags &= ~FL_SPECIAL;
+                    if (convert == 'o') fwidth -= 1;
+                    else fwidth -= 2;
                 }
                 // Add leading zero padding if required.
                 if ((flags & FL_ZERO_PAD) && !(flags & FL_LEFT_JUST))
