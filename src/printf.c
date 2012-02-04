@@ -24,6 +24,7 @@ This version supports integers, but not longs.
 
 // System and config header files are included by the parent stub file.
 #include <stdarg.h>
+#include <string.h>
 #include "printf.h"
 #include "printf_cfg.h"
 
@@ -50,18 +51,22 @@ This version supports integers, but not longs.
 
 #define BUFLEN  16      // Size of buffer for formatting numbers into
 
+#define FL_LEFT_JUST    (1<<0)
+#define FL_ZERO_PAD     (1<<1)
+
 static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
 {
     int value;
     unsigned uvalue;
     unsigned base;
     int width;
-    char prefix_char;
-    char pad_char;
+    int fwidth;
+    char sign_char;
     char convert, c;
     char *p;
     char buffer[BUFLEN];
     int  count = 0;
+    unsigned char flags;
 
     buffer[BUFLEN-1] = '\0';
 
@@ -69,17 +74,35 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
     {
         p = buffer + BUFLEN - 1;
         width = 0;
-        prefix_char = '\0';
-        pad_char = ' ';
+        sign_char = 0;
+        flags = 0;
 
         if (convert == '%')
         {
-            convert = GET_FORMAT(++fmt);
-            if (convert == '0')
+            // Extract flag chars
+            for (;;)
             {
-                pad_char = '0';
                 convert = GET_FORMAT(++fmt);
+                if (convert == '0')
+                {
+                    flags |= FL_ZERO_PAD;
+                }
+                else if (convert == '+')
+                {
+                    sign_char = '+';
+                }
+                else if (convert == '-')
+                {
+                    flags |= FL_LEFT_JUST;
+                }
+                else if (convert == ' ')
+                {
+                    sign_char = ' ';
+                }
+                else
+                    break;
             }
+            // Extract width
             while (convert >= '0' && convert <= '9')
             {
                 width = width * 10 + convert - '0';
@@ -97,7 +120,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 base = 10;
                 if (value < 0)
                 {
-                    prefix_char = '-';
+                    sign_char = '-';
                     value = -value;
                 }
                 uvalue = (unsigned) value;
@@ -110,22 +133,35 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 uvalue = va_arg(ap, unsigned);
                 base = 16;
             number:
+                // Generate the number without any prefix yet.
+                fwidth = width;
                 if (uvalue == 0)
                 {
                     // Avoid printing 0 as ' '
                     *--p = '0';
-                    --width;
+                    --fwidth;
                 }
-                while (uvalue || width > 0)
+                while (uvalue)
                 {
                     c = (char) ((uvalue % base) + '0');
                     if (c > '9') c += 'A' - '0' - 10;   // Hex digits
-                    if (uvalue == 0) c = pad_char;
                     *--p = c;
                     uvalue /= base;
-                    --width;
+                    --fwidth;
                 }
-                if (prefix_char) *--p = prefix_char;
+                // Allocate space for the sign bit.
+                if (sign_char) --fwidth;
+                // Add leading zero padding if required.
+                if ((flags & FL_ZERO_PAD) && !(flags & FL_LEFT_JUST))
+                {
+                    while (fwidth > 0)
+                    {
+                        *--p = '0';
+                        --fwidth;
+                    }
+                }
+                // Add the sign prefix
+                if (sign_char) *--p = sign_char;
                 break;
             case 's':
                 p = va_arg(ap, char *);
@@ -140,10 +176,13 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
             *--p = convert;
         }
 
+        // Check width of formatted text.
+        fwidth = strlen(p);
+        // Copy formatted text with leading or trailing space.
         while (*p || width > 0)
         {
-            if (*p) c = *p++;
-            else    c = ' ';
+            if (((flags & FL_LEFT_JUST) || width <= fwidth) && *p) c = *p++;
+            else c = ' ';
             if (ptr != 0) *ptr++ = c;
             else func(c);
             ++count;
