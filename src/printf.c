@@ -134,6 +134,11 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 uvalue = va_arg(ap, unsigned);
                 base = 10;
                 goto number;
+            case 'o':
+                uvalue = va_arg(ap, unsigned);
+                base = 8;
+                sign_char = 0;
+                goto number;
             case 'x':
             case 'X':
                 uvalue = va_arg(ap, unsigned);
@@ -167,6 +172,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 if (flags & FL_SPECIAL)
                 {
                     if (convert == 'x' || convert == 'X') fwidth -= 2;
+                    else if (convert == 'o') fwidth -= 1;
                     else flags &= ~FL_SPECIAL;
                 }
                 // Add leading zero padding if required.
@@ -181,7 +187,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 // Add special prefix if required.
                 if (flags & FL_SPECIAL)
                 {
-                    *--p = convert;
+                    if (convert != 'o') *--p = convert;
                     *--p = '0';
                 }
                 // Add the sign prefix
