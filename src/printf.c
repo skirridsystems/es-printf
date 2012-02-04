@@ -127,6 +127,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 *--p = (char) va_arg(ap, int);
                 break;
             case 'd':
+            case 'i':
                 value = va_arg(ap, int);
                 base = 10;
                 if (value < 0)
