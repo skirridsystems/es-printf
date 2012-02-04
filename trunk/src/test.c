@@ -34,10 +34,13 @@
 
 
 #define PI  3.14159265358979323844
+#define N   -23
+#define X   0x23
 
 int main(int argc, char *argv[])
 {
     tprintf("Hello world\n");
+    tprintf("Int %d %4d %04d %+04d % 4d %-4d.\n", N, N, N, N, N, N);
     tprintf("pi = %1.6f\n", PI);
     return 0;
 }
