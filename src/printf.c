@@ -62,6 +62,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
     unsigned base;
     int width;
     int fwidth;
+    int precision;
     char sign_char;
     char convert, c;
     char *p;
@@ -75,6 +76,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
     {
         p = buffer + BUFMAX;
         width = 0;
+        precision = -1;
         sign_char = 0;
         flags = 0;
 
@@ -120,6 +122,24 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 convert = GET_FORMAT(++fmt);
             }
 
+            // Extract precision
+            if (convert == '.')
+            {
+                precision = 0;
+                convert = GET_FORMAT(++fmt);
+                if (convert == '*')
+                {
+                    precision = va_arg(ap, int);
+                    convert = GET_FORMAT(++fmt);
+                }
+                else
+                while (convert >= '0' && convert <= '9')
+                {
+                    precision = precision * 10 + convert - '0';
+                    convert = GET_FORMAT(++fmt);
+                }
+            }
+
             switch (convert)
             {
             case 'c':
@@ -150,6 +170,8 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 uvalue = va_arg(ap, unsigned);
                 base = 16;
             number:
+                // Set default precision
+                if (precision == -1) precision = 1;
                 // Make sure options are valid.
                 if (base != 10) sign_char = 0;
                 else            flags &= ~FL_SPECIAL;
@@ -157,13 +179,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 fwidth = width;
                 // Avoid formatting buffer overflow.
                 if (fwidth > BUFMAX) fwidth = BUFMAX;
-                if (uvalue == 0)
-                {
-                    // Avoid printing 0 as ' '
-                    *--p = '0';
-                    --fwidth;
-                }
-                while (uvalue)
+                while (uvalue || precision > 0)
                 {
                     c = (char) ((uvalue % base) + '0');
                     if (c > '9')
@@ -175,6 +191,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                     *--p = c;
                     uvalue /= base;
                     --fwidth;
+                    --precision;
                 }
                 // Allocate space for the sign bit.
                 if (sign_char) --fwidth;
@@ -201,6 +218,8 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 }
                 // Add the sign prefix
                 if (sign_char) *--p = sign_char;
+                // Precision is not used to limit number output.
+                precision = -1;
                 break;
             case 's':
                 p = va_arg(ap, char *);
@@ -218,14 +237,16 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
         // Check width of formatted text.
         fwidth = strlen(p);
         // Copy formatted text with leading or trailing space.
-        while (*p || width > 0)
+        // A positive value for precision will limit the length of p used.
+        while ((*p && precision != 0) || width > 0)
         {
-            if (((flags & FL_LEFT_JUST) || width <= fwidth) && *p) c = *p++;
+            if (((flags & FL_LEFT_JUST) || width <= fwidth) && *p && precision != 0) c = *p++;
             else c = ' ';
             if (ptr != 0) *ptr++ = c;
             else func(c);
             ++count;
             --width;
+            if (precision > 0) --precision;
         }
         ++fmt;
     }
