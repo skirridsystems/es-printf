@@ -54,6 +54,9 @@ This version supports integers, but not longs.
 #define FL_LEFT_JUST    (1<<0)
 #define FL_ZERO_PAD     (1<<1)
 #define FL_SPECIAL      (1<<2)
+#define FL_PLUS         (1<<3)
+#define FL_SPACE        (1<<4)
+#define FL_NEG          (1<<5)
 
 static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
 {
@@ -63,7 +66,6 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
     int width;
     int fwidth;
     int precision;
-    char sign_char;
     char convert, c;
     char *p;
     char buffer[BUFMAX+1];
@@ -77,7 +79,6 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
         p = buffer + BUFMAX;
         width = 0;
         precision = -1;
-        sign_char = 0;
         flags = 0;
 
         if (convert == '%')
@@ -92,7 +93,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 }
                 else if (convert == '+')
                 {
-                    sign_char = '+';
+                    flags |= FL_PLUS;
                 }
                 else if (convert == '-')
                 {
@@ -100,7 +101,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 }
                 else if (convert == ' ')
                 {
-                    sign_char = ' ';
+                    flags |= FL_SPACE;
                 }
                 else if (convert == '#')
                 {
@@ -152,7 +153,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 base = 10;
                 if (value < 0)
                 {
-                    sign_char = '-';
+                    flags |= FL_NEG;
                     value = -value;
                 }
                 uvalue = (unsigned) value;
@@ -173,7 +174,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 // Set default precision
                 if (precision == -1) precision = 1;
                 // Make sure options are valid.
-                if (base != 10) sign_char = 0;
+                if (base != 10) flags &= ~(FL_PLUS|FL_NEG|FL_SPACE);
                 else            flags &= ~FL_SPECIAL;
                 // Generate the number without any prefix yet.
                 fwidth = width;
@@ -194,7 +195,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                     --precision;
                 }
                 // Allocate space for the sign bit.
-                if (sign_char) --fwidth;
+                if (flags & (FL_PLUS|FL_NEG|FL_SPACE)) --fwidth;
                 // Allocate space for special chars if required.
                 if (flags & FL_SPECIAL)
                 {
@@ -217,7 +218,9 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                     *--p = '0';
                 }
                 // Add the sign prefix
-                if (sign_char) *--p = sign_char;
+                if      (flags & FL_NEG)    *--p = '-';
+                else if (flags & FL_PLUS)   *--p = '+';
+                else if (flags & FL_SPACE)  *--p = ' ';
                 // Precision is not used to limit number output.
                 precision = -1;
                 break;
