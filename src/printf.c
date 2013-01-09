@@ -58,6 +58,61 @@ This version supports integers, but not longs.
 #define FL_SPACE        (1<<4)
 #define FL_NEG          (1<<5)
 
+static char *format_int(unsigned uvalue, unsigned base, int precision, int fwidth, char convert, unsigned char flags, char *buffer)
+{
+    char *p = buffer + BUFMAX;
+    char c;
+    
+    // Make sure options are valid.
+    if (base != 10) flags &= ~(FL_PLUS|FL_NEG|FL_SPACE);
+    else            flags &= ~FL_SPECIAL;
+    // Avoid formatting buffer overflow.
+    if (fwidth > BUFMAX) fwidth = BUFMAX;
+    while (uvalue || precision > 0)
+    {
+        c = (char) ((uvalue % base) + '0');
+        if (c > '9')
+        {
+            // Hex digits
+            if (convert == 'X') c += 'A' - '0' - 10;
+            else                c += 'a' - '0' - 10;
+        }
+        *--p = c;
+        uvalue /= base;
+        --fwidth;
+        --precision;
+    }
+    // Allocate space for the sign bit.
+    if (flags & (FL_PLUS|FL_NEG|FL_SPACE)) --fwidth;
+    // Allocate space for special chars if required.
+    if (flags & FL_SPECIAL)
+    {
+        if (convert == 'o') fwidth -= 1;
+        else fwidth -= 2;
+    }
+    // Add leading zero padding if required.
+    if ((flags & FL_ZERO_PAD) && !(flags & FL_LEFT_JUST))
+    {
+        while (fwidth > 0)
+        {
+            *--p = '0';
+            --fwidth;
+        }
+    }
+    // Add special prefix if required.
+    if (flags & FL_SPECIAL)
+    {
+        if (convert != 'o') *--p = convert;
+        *--p = '0';
+    }
+    // Add the sign prefix
+    if      (flags & FL_NEG)    *--p = '-';
+    else if (flags & FL_PLUS)   *--p = '+';
+    else if (flags & FL_SPACE)  *--p = ' ';
+    
+    return p;
+}
+
 static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
 {
     int value;
@@ -76,7 +131,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
 
     while ((convert = GET_FORMAT(fmt)) != 0)
     {
-        p = buffer + BUFMAX;
+        p = buffer + BUFMAX - 1;
         width = 0;
         precision = -1;
         flags = 0;
@@ -145,7 +200,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
             {
             case 'c':
                 width = 0;
-                *--p = (char) va_arg(ap, int);
+                *p = (char) va_arg(ap, int);
                 break;
             case 'd':
             case 'i':
@@ -173,54 +228,8 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
             number:
                 // Set default precision
                 if (precision == -1) precision = 1;
-                // Make sure options are valid.
-                if (base != 10) flags &= ~(FL_PLUS|FL_NEG|FL_SPACE);
-                else            flags &= ~FL_SPECIAL;
-                // Generate the number without any prefix yet.
-                fwidth = width;
-                // Avoid formatting buffer overflow.
-                if (fwidth > BUFMAX) fwidth = BUFMAX;
-                while (uvalue || precision > 0)
-                {
-                    c = (char) ((uvalue % base) + '0');
-                    if (c > '9')
-                    {
-                        // Hex digits
-                        if (convert == 'X') c += 'A' - '0' - 10;
-                        else                c += 'a' - '0' - 10;
-                    }
-                    *--p = c;
-                    uvalue /= base;
-                    --fwidth;
-                    --precision;
-                }
-                // Allocate space for the sign bit.
-                if (flags & (FL_PLUS|FL_NEG|FL_SPACE)) --fwidth;
-                // Allocate space for special chars if required.
-                if (flags & FL_SPECIAL)
-                {
-                    if (convert == 'o') fwidth -= 1;
-                    else fwidth -= 2;
-                }
-                // Add leading zero padding if required.
-                if ((flags & FL_ZERO_PAD) && !(flags & FL_LEFT_JUST))
-                {
-                    while (fwidth > 0)
-                    {
-                        *--p = '0';
-                        --fwidth;
-                    }
-                }
-                // Add special prefix if required.
-                if (flags & FL_SPECIAL)
-                {
-                    if (convert != 'o') *--p = convert;
-                    *--p = '0';
-                }
-                // Add the sign prefix
-                if      (flags & FL_NEG)    *--p = '-';
-                else if (flags & FL_PLUS)   *--p = '+';
-                else if (flags & FL_SPACE)  *--p = ' ';
+                // Format integer into the formatting buffer.
+                p = format_int(uvalue, base, precision, width, convert, flags, buffer);
                 // Precision is not used to limit number output.
                 precision = -1;
                 break;
@@ -228,13 +237,13 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 p = va_arg(ap, char *);
                 break;
             default:
-                *--p = convert;
+                *p = convert;
                 break;
             }
         }
         else
         {
-            *--p = convert;
+            *p = convert;
         }
 
         // Check width of formatted text.
