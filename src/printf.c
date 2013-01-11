@@ -49,7 +49,7 @@ This version supports integers, but not longs.
     #define sprintf sprintf_rom
 #endif
 
-#define BUFMAX  16      // Size of buffer for formatting numbers into
+#define BUFMAX  30      // Size of buffer for formatting numbers into
 
 #define FL_LEFT_JUST    (1<<0)
 #define FL_ZERO_PAD     (1<<1)
@@ -57,6 +57,258 @@ This version supports integers, but not longs.
 #define FL_PLUS         (1<<3)
 #define FL_SPACE        (1<<4)
 #define FL_NEG          (1<<5)
+#define FL_FCVT         (1<<6)
+#define FL_GCVT         (1<<7)
+
+#define FLOAT_DIGITS    17
+#define MAX_POWER       256
+
+static const double smalltable[] = {
+    1e-256, 1e-128, 1e-64,
+    1e-32, 1e-16, 1e-8, 1e-4, 1e-2, 1e-1, 1.0
+};
+static const double largetable[] = {
+    1e+256, 1e+128, 1e+64,
+    1e+32, 1e+16, 1e+8, 1e+4, 1e+2, 1e+1
+};
+
+static char *format_float(double number, int ndigits, unsigned char flags, char exp_char, char *buf)
+{
+    int decpt;
+    int power10;
+    unsigned char i;
+    char *p = buf + 2;
+    char *pend;
+    
+    // Handle all numbers as positive.
+    if (number < 0)
+    {
+        number = -number;
+        flags |= FL_NEG;
+    }
+
+    // Digits printed cannot be negative.
+    if (ndigits < 0)
+        ndigits = 0;
+
+    // Prefill buffer with zeros.
+    for (i = 0; i < BUFMAX; i++)
+        buf[i] = '0';
+
+    // Handle special values
+    if (0)
+    {
+        // Handle NaN and Inf here
+    }
+    else
+    {
+        if (number == 0)
+        {
+            // Special case to correct number of decimals, significant figures,
+            // and avoid printing 0E-00.
+            ndigits++;
+            decpt = 1;
+        }
+        else
+        {
+            /* Normalise the number such that it lies in the range 1 <= n < 10.
+             * This is done using a binary search, making the largest possible
+             * adjustment first and getting progressively smaller. This gets
+             * to the answer in the fastest time, with the minimum number of
+             * operations to introduce rounding errors.
+             */
+            decpt = 1;
+            // First make small numbers bigger.
+            power10 = MAX_POWER;
+            i = 0;
+            while (number < 1.0)
+            {
+                while (number < smalltable[i + 1])
+                {
+                    number /= smalltable[i];
+                    decpt -= power10;
+                }
+                power10 >>= 1;
+                i++;
+            }
+            // Then make big numbers smaller.
+            power10 = MAX_POWER;
+            i = 0;
+            while (number >= 10.0)
+            {
+                while (number >= largetable[i])
+                {
+                    number /= largetable[i];
+                    decpt += power10;
+                }
+                power10 >>= 1;
+                i++;
+            }
+        }
+        
+        // For g conversions determine whether to use e or f mode.
+        if (flags & FL_GCVT)
+        {
+            /* 'g' format uses 'f' notation where it can and
+             * 'e' notation where the exponent is more extreme.
+             * Some references indicate that it uses the more
+             * compact form but the ANSI standard give an explict
+             * definition: Use 'e' when the exponent is < -4
+             * or where the exponent is >= ndigits.
+             * The exponent is equal to decpt - 1.
+             * http://www.acm.uiuc.edu/webmonkeys/book/c_guide/2.12.html#printf
+             * http://www.mkssoftware.com/docs/man3/printf.3.asp
+             */
+            if (decpt > -4 && decpt < ndigits)
+                flags |= FL_FCVT;
+        }
+        
+        // Sanitise ndigits making sure it fits buffer space.
+        if (flags & FL_FCVT)
+        {
+            if (!(flags & FL_GCVT))
+            {
+                // For fcvt operation the number of digits is used to
+                // refer to decimal places rather than significant digits.
+                ndigits += decpt;
+                // When there are no significant digits,
+                // avoid printing too many 0's.
+                if (ndigits < 0)
+                {
+                    decpt -= ndigits;
+                    ndigits = 0;
+                }
+            }
+            // For 'f' conversions with positive DP value that would overflow
+            // the buffer space, fall back to 'e' format.
+            if (decpt > BUFMAX+3)
+            {
+                flags &= ~FL_FCVT;
+            }
+        }
+
+        if (flags & FL_FCVT)
+        {
+            // Allow space for sign, point and rounding digit.
+            if (ndigits > BUFMAX-3)
+                ndigits = BUFMAX-3;
+            // Start placing digits after leading 0's
+            if (decpt < 1)
+            {
+                // Number of leading zeros
+                int nzero = 1 - decpt;
+                // Ensure pointer is not past end of buffer
+                if (nzero > BUFMAX-3)
+                    nzero = BUFMAX-3;
+                p += nzero;
+            }
+        }
+        else
+        {
+            // Allow space for sign, point and up to 3 digit exponent (E+123).
+            // Rounding happens in the place where the exponent will go.
+            if (ndigits > BUFMAX-7)
+                ndigits = BUFMAX-7;
+        }
+        
+        // Format digits one-by-one into the output string.
+        // One extra digit is required for rounding.
+        for (i = 0; i <= ndigits; i++)
+        {
+            // Ignore digits beyond the supported precision.
+            if (i >= FLOAT_DIGITS)
+            {
+                *p++ = '0';
+            }
+            else
+            {
+                int n = number;
+                *p++ = n + '0';
+                number = (number - n) * 10;
+            }
+        }
+        // Store a pointer to the last (rounding) digit.
+        pend = --p;
+        // Round the result directly in the string buffer.
+        // Only use the calculated digits, not trailing 0's.
+        if (i > FLOAT_DIGITS)
+        {
+            p -= (i - FLOAT_DIGITS);
+        }
+        if (*p >= '5')
+        {
+            for (;;)
+            {
+                if (i == 0)
+                {
+                    // The rounding has rippled all the way through to
+                    // the first digit. i.e. 9.999..9 -> 10.0
+                    // Just replace the first 0 with a 1 and shift the DP.
+                    *p = '1';
+                    ++decpt;
+                    // This increases the displayed digits for 'f' only.
+                    if ((flags & (FL_FCVT|FL_GCVT)) == FL_FCVT)
+                        ++ndigits;
+                    break;
+                }
+                // Previous digit was a rollover
+                *p-- = '0';
+                // Increment next digit and break out unless there is a rollover.
+                if (*p != '9')
+                {
+                    (*p)++;
+                    break;
+                }
+            }
+        }
+    }
+    // Insert the decimal point
+    if (flags & FL_FCVT)
+    {
+        int num;
+        num = (decpt > 1) ? decpt : 1;
+        p = buf + 1;
+        for (i = 0; i < num; i++)
+        {
+            *p = *(p+1);
+            ++p;
+        }
+        *p = '.';
+    }
+    else
+    {
+        // Decimal point is always after first digit.
+        buf[1] = buf[2];
+        buf[2] = '.';
+        // Add exponent
+        *pend++ = exp_char;
+        if (--decpt < 0)
+        {
+            *pend++ = '-';
+            decpt = -decpt;
+        }
+        else
+        {
+            *pend++ = '+';
+        }
+        // Always print at least 2 digits of exponent.
+        if (decpt > 99)
+        {
+            *pend++ = decpt / 100 + '0';
+            decpt %= 100;
+        }
+        *pend++ = decpt / 10 + '0';
+        *pend++ = decpt % 10 + '0';
+    }
+    // Add the sign prefix.
+    p = buf + 1;
+    if      (flags & FL_NEG)    *--p = '-';
+    else if (flags & FL_PLUS)   *--p = '+';
+    else if (flags & FL_SPACE)  *--p = ' ';
+    
+    *pend = '\0';   // Add null terminator
+    return p;       // Start of string
+}
 
 static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
 {
@@ -71,6 +323,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
     char buffer[BUFMAX+1];
     int  count = 0;
     unsigned char flags;
+    double fvalue;
 
     buffer[BUFMAX] = '\0';
 
@@ -221,6 +474,34 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 if      (flags & FL_NEG)    *--p = '-';
                 else if (flags & FL_PLUS)   *--p = '+';
                 else if (flags & FL_SPACE)  *--p = ' ';
+                // Precision is not used to limit number output.
+                precision = -1;
+                break;
+            case 'f':
+                // Set default precision
+                if (precision == -1) precision = 6;
+                fvalue = va_arg(ap, double);
+                flags |= FL_FCVT;
+                p = format_float(fvalue, precision, flags, 'e', buffer);
+                // Precision is not used to limit number output.
+                precision = -1;
+                break;
+            case 'e':
+            case 'E':
+                // Set default precision
+                if (precision == -1) precision = 6;
+                fvalue = va_arg(ap, double);
+                p = format_float(fvalue, precision + 1, flags, convert, buffer);
+                // Precision is not used to limit number output.
+                precision = -1;
+                break;
+            case 'g':
+            case 'G':
+                // Set default precision
+                if (precision == -1) precision = 6;
+                fvalue = va_arg(ap, double);
+                flags |= FL_GCVT;
+                p = format_float(fvalue, precision, flags, convert - 2, buffer);
                 // Precision is not used to limit number output.
                 precision = -1;
                 break;
