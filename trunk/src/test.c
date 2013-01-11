@@ -34,6 +34,8 @@
 
 
 #define PI  3.14159265358979323844
+#define FL  1.2345e10
+#define FS  1.2345e-10
 #define N   -23
 #define X   0x5a
 #define O   023
@@ -47,6 +49,8 @@ int main(int argc, char *argv[])
     tprintf("Oct %o %4o %04o %+o %+#o % o %-o.\n", O, O, O, O, O, O, O);
     tprintf("Str %s %4s %-4s %*s.\n", S, S, S, 4, S);
     tprintf("Prec %.d %.2d %.2d %.2d %-5.3s %.3s.\n", 0, 1, 0, -1, S, S);
-    tprintf("pi = %1.6f\n", PI);
+    tprintf("pi = %f %e %g\n", PI, PI, PI);
+    tprintf("pi = %f %e %g\n", FL, FL, FL);
+    tprintf("pi = %f %e %g\n", FS, FS, FS);
     return 0;
 }
