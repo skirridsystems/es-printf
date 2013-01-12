@@ -9,6 +9,7 @@
     #include <stdio.h>
     #define EXP_3_DIGIT
 #endif
+    #include "float.h"
 
 /* Force printf.c to rename the functions so we can use both
    the standard library and our own version for side-by-side tests.
@@ -45,6 +46,7 @@
 
 int main(int argc, char *argv[])
 {
+    double one = 1.0;
     tprintf("Hello world\n");
     tprintf("Int %d %*d %4d %04d %+04d % 4d %-4d. %+3d %+3d % 3d % 3d\n", N, 4, N, N, N, N, N, N, 0, 0, -1, -1);
     tprintf("Hex %x %4x %018X %+x %+#x % x %-x.\n", X, X, X, X, X, X, X);
@@ -56,5 +58,7 @@ int main(int argc, char *argv[])
     tprintf("flarge = %f %e %g\n", FL, FL, FL);
     tprintf("fsmall = %f %e %g\n", FS, FS, FS);
     tprintf("%%g = %g %g %g %G\n", 1.23e-5, 1.23e-4, 1.23e5, 1.23e6);
+    tprintf("Max/Min = %e %e\n", DBL_MAX, DBL_MIN);
+    tprintf("NaN/Inf = %f %f\n", sqrt(-1), one / (one - 1.0));
     return 0;
 }
