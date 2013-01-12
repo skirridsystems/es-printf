@@ -72,6 +72,18 @@ static const double largetable[] = {
     1e+32, 1e+16, 1e+8, 1e+4, 1e+2, 1e+1
 };
 
+// Function to trim trailing zeros and DP in 'g' mode.
+// Return pointer to new string terminator position.
+static char *trim_zeros(char *p)
+{
+    // Trim trailing 0's in 'g' mode.
+    while (*p == '0')
+        p--;
+    // If last non-zero is DP, trim that as well.
+    if (*p != '.') ++p;
+    return p;
+}
+
 static char *format_float(double number, int ndigits, unsigned char flags, char exp_char, char *buf)
 {
     int decpt;
@@ -155,11 +167,12 @@ static char *format_float(double number, int ndigits, unsigned char flags, char 
              * compact form but the ANSI standard give an explict
              * definition: Use 'e' when the exponent is < -4
              * or where the exponent is >= ndigits.
-             * The exponent is equal to decpt - 1.
+             * The exponent is equal to decpt - 1 so this translates
+             * to decpt <= -4 || decpt > ndigits
              * http://www.acm.uiuc.edu/webmonkeys/book/c_guide/2.12.html#printf
              * http://www.mkssoftware.com/docs/man3/printf.3.asp
              */
-            if (decpt > -4 && decpt < ndigits)
+            if (decpt > -4 && decpt <= ndigits)
                 flags |= FL_FCVT;
         }
         
@@ -281,13 +294,32 @@ static char *format_float(double number, int ndigits, unsigned char flags, char 
             *p = *(p+1);
             ++p;
         }
-        *p = '.';
+        if (p + 1 < pend || (flags & FL_SPECIAL))
+        {
+            // There are digits after the DP or DP is forced.
+            *p = '.';
+            // Trim trailing 0's in 'g' mode.
+            if ((flags & FL_GCVT) && !(flags & FL_SPECIAL))
+            {
+                pend = trim_zeros(pend - 1);
+            }
+        }
+        else
+        {
+            // DP at end is not required.
+            --pend;
+        }
     }
     else
     {
         // Decimal point is always after first digit.
         buf[1] = buf[2];
         buf[2] = '.';
+        // Trim trailing 0's in 'g' mode.
+        if ((flags & FL_GCVT) && !(flags & FL_SPECIAL))
+        {
+            pend = trim_zeros(pend - 1);
+        }
         // Add exponent
         *pend++ = exp_char;
         if (--decpt < 0)
