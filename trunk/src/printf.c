@@ -179,9 +179,14 @@ static char *format_float(double number, int ndigits, unsigned char flags, char 
                     ndigits = 0;
                 }
             }
-            // For 'f' conversions with positive DP value that would overflow
-            // the buffer space, fall back to 'e' format.
-            if (decpt > BUFMAX+3)
+            /* For 'f' conversions with positive DP value that would overflow
+             * the buffer space, there is no way to display this so fall back
+             * to 'e' format. 'f' conversion needs space for sign, point and
+             * rounding digit. The point may be forced using the special flag
+             * and the rounding digit may be included in the case of maximum
+             * overflow.
+             */
+            if (decpt > BUFMAX-3)
             {
                 flags &= ~FL_FCVT;
             }
@@ -248,7 +253,10 @@ static char *format_float(double number, int ndigits, unsigned char flags, char 
                     ++decpt;
                     // This increases the displayed digits for 'f' only.
                     if ((flags & (FL_FCVT|FL_GCVT)) == FL_FCVT)
+                    {
                         ++ndigits;
+                        ++pend;
+                    }
                     break;
                 }
                 // Previous digit was a rollover
