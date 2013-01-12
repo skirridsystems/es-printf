@@ -7,6 +7,7 @@
     #define PUTCHAR_FUNC    outchar
 #else
     #include <stdio.h>
+    #define EXP_3_DIGIT
 #endif
 
 /* Force printf.c to rename the functions so we can use both
@@ -34,6 +35,7 @@
 
 
 #define PI  3.14159265358979323844
+#define F6  123450.0
 #define FL  1.2345e10
 #define FS  1.2345e-10
 #define N   -23
@@ -50,7 +52,9 @@ int main(int argc, char *argv[])
     tprintf("Str %s %4s %-4s %*s.\n", S, S, S, 4, S);
     tprintf("Prec %.d %.2d %.2d %.2d %-5.3s %.3s.\n", 0, 1, 0, -1, S, S);
     tprintf("pi = %f %e %g\n", PI, PI, PI);
-    tprintf("pi = %f %e %g\n", FL, FL, FL);
-    tprintf("pi = %f %e %g\n", FS, FS, FS);
+    tprintf("f6dig = %.0f %e %g\n", F6, F6, F6);
+    tprintf("flarge = %f %e %g\n", FL, FL, FL);
+    tprintf("fsmall = %f %e %g\n", FS, FS, FS);
+    tprintf("%%g = %g %g %g %G\n", 1.23e-5, 1.23e-4, 1.23e5, 1.23e6);
     return 0;
 }
