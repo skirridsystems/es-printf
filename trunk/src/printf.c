@@ -331,12 +331,15 @@ static char *format_float(double number, int ndigits, unsigned char flags, char 
         {
             *pend++ = '+';
         }
-        // Always print at least 2 digits of exponent.
+#ifndef EXP_3_DIGIT
+        // Optional 3rd digit of exponent
         if (decpt > 99)
+#endif
         {
             *pend++ = decpt / 100 + '0';
             decpt %= 100;
         }
+        // Always print at least 2 digits of exponent.
         *pend++ = decpt / 10 + '0';
         *pend++ = decpt % 10 + '0';
     }
