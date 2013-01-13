@@ -381,8 +381,8 @@ static char *format_float(double number, int ndigits, unsigned char flags, unsig
 
 static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
 {
-    int value;
-    unsigned uvalue;
+    long value;
+    unsigned long uvalue;
     unsigned base;
     int width;
     int fwidth;
@@ -465,6 +465,13 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 }
             }
 
+            // Extract length modifier
+            if (convert == 'l')
+            {
+                flags |= FL_LONG;
+                convert = GET_FORMAT(++fmt);
+            }
+
             switch (convert)
             {
             case 'c':
@@ -473,7 +480,10 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 break;
             case 'd':
             case 'i':
-                value = va_arg(ap, int);
+                if (flags & FL_LONG)
+                    value = va_arg(ap, long);
+                else
+                    value = va_arg(ap, int);
                 base = 10;
                 if (value < 0)
                 {
@@ -483,16 +493,25 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 uvalue = (unsigned) value;
                 goto number;
             case 'u':
-                uvalue = va_arg(ap, unsigned);
+                if (flags & FL_LONG)
+                    uvalue = va_arg(ap, unsigned long);
+                else
+                    uvalue = va_arg(ap, unsigned);
                 base = 10;
                 goto number;
             case 'o':
-                uvalue = va_arg(ap, unsigned);
+                if (flags & FL_LONG)
+                    uvalue = va_arg(ap, unsigned long);
+                else
+                    uvalue = va_arg(ap, unsigned);
                 base = 8;
                 goto number;
             case 'x':
             case 'X':
-                uvalue = va_arg(ap, unsigned);
+                if (flags & FL_LONG)
+                    uvalue = va_arg(ap, unsigned long);
+                else
+                    uvalue = va_arg(ap, unsigned);
                 base = 16;
             number:
                 // Set default precision
