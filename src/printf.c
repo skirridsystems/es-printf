@@ -52,14 +52,19 @@ This version supports integers, but not longs.
 
 #define BUFMAX  30      // Size of buffer for formatting numbers into
 
+// Bits in the flags variable
 #define FL_LEFT_JUST    (1<<0)
 #define FL_ZERO_PAD     (1<<1)
 #define FL_SPECIAL      (1<<2)
 #define FL_PLUS         (1<<3)
 #define FL_SPACE        (1<<4)
 #define FL_NEG          (1<<5)
-#define FL_FCVT         (1<<6)
-#define FL_GCVT         (1<<7)
+#define FL_LONG         (1<<6)
+
+// Bits in the fflags variable
+#define FF_UCASE        (1<<0)
+#define FF_FCVT         (1<<1)
+#define FF_GCVT         (1<<2)
 
 #define FLOAT_DIGITS    17
 #define MAX_POWER       256
@@ -85,7 +90,7 @@ static char *trim_zeros(char *p)
     return p;
 }
 
-static char *format_float(double number, int ndigits, unsigned char flags, char exp_char, char *buf)
+static char *format_float(double number, int ndigits, unsigned char flags, unsigned char fflags, char *buf)
 {
     int decpt;
     int power10;
@@ -180,7 +185,7 @@ static char *format_float(double number, int ndigits, unsigned char flags, char 
     }
     
     // For g conversions determine whether to use e or f mode.
-    if (flags & FL_GCVT)
+    if (fflags & FF_GCVT)
     {
         /* 'g' format uses 'f' notation where it can and
          * 'e' notation where the exponent is more extreme.
@@ -194,13 +199,13 @@ static char *format_float(double number, int ndigits, unsigned char flags, char 
          * http://www.mkssoftware.com/docs/man3/printf.3.asp
          */
         if (decpt > -4 && decpt <= ndigits)
-            flags |= FL_FCVT;
+            fflags |= FF_FCVT;
     }
     
     // Sanitise ndigits making sure it fits buffer space.
-    if (flags & FL_FCVT)
+    if (fflags & FF_FCVT)
     {
-        if (!(flags & FL_GCVT))
+        if (!(fflags & FF_GCVT))
         {
             // For fcvt operation the number of digits is used to
             // refer to decimal places rather than significant digits.
@@ -222,11 +227,11 @@ static char *format_float(double number, int ndigits, unsigned char flags, char 
          */
         if (decpt > BUFMAX-3)
         {
-            flags &= ~FL_FCVT;
+            fflags &= ~FF_FCVT;
         }
     }
 
-    if (flags & FL_FCVT)
+    if (fflags & FF_FCVT)
     {
         // Allow space for sign, point and rounding digit.
         if (ndigits > BUFMAX-3)
@@ -286,7 +291,7 @@ static char *format_float(double number, int ndigits, unsigned char flags, char 
                 *p = '1';
                 ++decpt;
                 // This increases the displayed digits for 'f' only.
-                if ((flags & (FL_FCVT|FL_GCVT)) == FL_FCVT)
+                if ((fflags & (FF_FCVT|FF_GCVT)) == FF_FCVT)
                 {
                     ++ndigits;
                     ++pend;
@@ -305,7 +310,7 @@ static char *format_float(double number, int ndigits, unsigned char flags, char 
     }
 
     // Insert the decimal point
-    if (flags & FL_FCVT)
+    if (fflags & FF_FCVT)
     {
         int num;
         num = (decpt > 1) ? decpt : 1;
@@ -320,7 +325,7 @@ static char *format_float(double number, int ndigits, unsigned char flags, char 
             // There are digits after the DP or DP is forced.
             *p = '.';
             // Trim trailing 0's in 'g' mode.
-            if ((flags & FL_GCVT) && !(flags & FL_SPECIAL))
+            if ((fflags & FF_GCVT) && !(flags & FL_SPECIAL))
             {
                 pend = trim_zeros(pend - 1);
             }
@@ -337,12 +342,12 @@ static char *format_float(double number, int ndigits, unsigned char flags, char 
         buf[1] = buf[2];
         buf[2] = '.';
         // Trim trailing 0's in 'g' mode.
-        if ((flags & FL_GCVT) && !(flags & FL_SPECIAL))
+        if ((fflags & FF_GCVT) && !(flags & FL_SPECIAL))
         {
             pend = trim_zeros(pend - 1);
         }
         // Add exponent
-        *pend++ = exp_char;
+        *pend++ = (fflags & FF_UCASE) ? 'E' : 'e';
         if (--decpt < 0)
         {
             *pend++ = '-';
@@ -387,6 +392,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
     char buffer[BUFMAX+1];
     int  count = 0;
     unsigned char flags;
+    unsigned char fflags;
     double fvalue;
 
     buffer[BUFMAX] = '\0';
@@ -397,6 +403,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
         width = 0;
         precision = -1;
         flags = 0;
+        fflags = 0;
 
         if (convert == '%')
         {
@@ -545,27 +552,29 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 // Set default precision
                 if (precision == -1) precision = 6;
                 fvalue = va_arg(ap, double);
-                flags |= FL_FCVT;
-                p = format_float(fvalue, precision, flags, 'e', buffer);
+                fflags = FF_FCVT;
+                p = format_float(fvalue, precision, flags, fflags, buffer);
                 // Precision is not used to limit number output.
                 precision = -1;
                 break;
-            case 'e':
             case 'E':
+                fflags = FF_UCASE;
+            case 'e':
                 // Set default precision
                 if (precision == -1) precision = 6;
                 fvalue = va_arg(ap, double);
-                p = format_float(fvalue, precision + 1, flags, convert, buffer);
+                p = format_float(fvalue, precision + 1, flags, fflags, buffer);
                 // Precision is not used to limit number output.
                 precision = -1;
                 break;
-            case 'g':
             case 'G':
+                fflags = FF_UCASE;
+            case 'g':
+                fflags |= FF_GCVT;
                 // Set default precision
                 if (precision == -1) precision = 6;
                 fvalue = va_arg(ap, double);
-                flags |= FL_GCVT;
-                p = format_float(fvalue, precision, flags, convert - 2, buffer);
+                p = format_float(fvalue, precision, flags, fflags, buffer);
                 // Precision is not used to limit number output.
                 precision = -1;
                 break;
