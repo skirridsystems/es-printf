@@ -1,25 +1,28 @@
 /*************************************************************************
+es-printf  -  configurable printf for embedded systems
 
-      Copyright (c) Skirrid Systems 2006 - 2012
+printf.c: Main source file for printf family of functions.
 
-     Module Name: printf.c
-    Description : Cut-down version of printf for embedded use.
+**************************************************************************
+Copyright (c) 2006 - 2013 Skirrid Systems
 
-Implementation notes:
-Contains a substantially cut down, integer-only version of the printf family.
-The following print specifiers are supported :-
-    %c  single character
-    %d  signed decimal int
-    %u  unsigned decimal int
-    %x  unsigned hex int
-    %s  string (in RAM, not Flash)
-Leading padding can be specified for numbers by inserting a width after the
-percentage sign. If the width starts with 0, the pad character is 0, otherwise
-space is used.
-Trailing space padding can be specified for strings in the same way.
-Any other character following the percentage sign is passed through unchanged.
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
 
-This version supports integers, but not longs.
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
 ******************************************************************************/
 
 // System and config header files are included by the parent stub file.
