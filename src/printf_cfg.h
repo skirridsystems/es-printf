@@ -62,6 +62,15 @@ extern void UARTSendByte(char c);
 */
 
 /*************************************************************************
+Compiler capability configuration
+
+Set some options that the C pre-processor will not tell use about.
+*************************************************************************/
+
+// Does the compiler support double precision or silently degrade to single?
+// #define NO_DOUBLE_PRECISION
+
+/*************************************************************************
 Feature configuration
 *************************************************************************/
 
