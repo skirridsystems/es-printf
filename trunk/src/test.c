@@ -33,6 +33,7 @@ DEALINGS IN THE SOFTWARE.
     #define GET_FORMAT(p)   pgm_read_byte(p)
     void outchar(char c) {}
     #define PUTCHAR_FUNC    outchar
+    #define NO_DOUBLE_PRECISION
 #else
     #include <stdio.h>
     #define EXP_3_DIGIT

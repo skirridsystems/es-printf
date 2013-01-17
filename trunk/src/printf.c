@@ -69,15 +69,25 @@ DEALINGS IN THE SOFTWARE.
 #define FF_FCVT         (1<<1)
 #define FF_GCVT         (1<<2)
 
-#define FLOAT_DIGITS    17
-#define MAX_POWER       256
+// Most compilers can support double precision
+#ifndef NO_DOUBLE_PRECISION
+  #define MAX_POWER     256
+  #define FLOAT_DIGITS  17
+#else
+  #define MAX_POWER     32
+  #define FLOAT_DIGITS  8
+#endif
 
 static const double smalltable[] = {
+#ifndef NO_DOUBLE_PRECISION
     1e-256, 1e-128, 1e-64,
+#endif
     1e-32, 1e-16, 1e-8, 1e-4, 1e-2, 1e-1, 1.0
 };
 static const double largetable[] = {
+#ifndef NO_DOUBLE_PRECISION
     1e+256, 1e+128, 1e+64,
+#endif
     1e+32, 1e+16, 1e+8, 1e+4, 1e+2, 1e+1
 };
 
