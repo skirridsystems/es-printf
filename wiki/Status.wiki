@@ -1,4 +1,5 @@
 #summary Where we're up to
+#labels Featured
 
 = Project Status =
 
