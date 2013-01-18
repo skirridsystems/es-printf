@@ -32,7 +32,7 @@ SRC = test.c
 INC = printf.c printf.h printf_cfg.h
 
 # Tool chain used for this project.
-AVRGCC = /winavr-20070525
+AVRGCC = /winavr-20100110
 
 # Tool chain used for the PC test version
 PC_GCC = gcc
@@ -94,4 +94,4 @@ $(TRG).exe: $(SRC) $(INC) makefile
 #---------------------- MAKE CLEAN -------------------------------
 #make instruction to delete created files
 clean:
-	$(RM) *.hex *.exe $(OUT)
+	$(RM) \*.hex \*.exe $(OUT)
