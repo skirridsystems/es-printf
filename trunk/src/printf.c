@@ -397,8 +397,12 @@ static char *format_float(double number, int ndigits, unsigned char flags, unsig
     // Add the sign prefix.
     p = buf + 1;
     if      (flags & FL_NEG)    *--p = '-';
+#if USE_PLUS_SIGN
     else if (flags & FL_PLUS)   *--p = '+';
+#endif
+#if USE_SPACE_SIGN
     else if (flags & FL_SPACE)  *--p = ' ';
+#endif
     
     *pend = '\0';   // Add null terminator
     return p;       // Start of string
@@ -452,29 +456,39 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
             for (;;)
             {
                 convert = GET_FORMAT(++fmt);
+#if USE_ZERO_PAD
                 if (convert == '0')
                 {
                     flags |= FL_ZERO_PAD;
                 }
-                else if (convert == '+')
+                else
+#endif
+#if USE_PLUS_SIGN
+                if (convert == '+')
                 {
                     flags |= FL_PLUS;
                 }
-                else if (convert == '-')
+                else
+#endif
+                if (convert == '-')
                 {
                     flags |= FL_LEFT_JUST;
                 }
-                else if (convert == ' ')
+                else
+#if USE_SPACE_SIGN
+                if (convert == ' ')
                 {
                     flags |= FL_SPACE;
                 }
+                else
+#endif
 #if USE_SPECIAL
-                else if (convert == '#')
+                if (convert == '#')
                 {
                     flags |= FL_SPECIAL;
                 }
-#endif
                 else
+#endif
                     break;
             }
             // Extract width
@@ -626,6 +640,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                     else fwidth -= 2;
                 }
 #endif
+#if USE_ZERO_PAD
                 // Add leading zero padding if required.
                 if ((flags & FL_ZERO_PAD) && !(flags & FL_LEFT_JUST))
                 {
@@ -635,6 +650,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                         --fwidth;
                     }
                 }
+#endif
 #if USE_SPECIAL
                 // Add special prefix if required.
                 if (flags & FL_SPECIAL)
@@ -645,8 +661,12 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
 #endif
                 // Add the sign prefix
                 if      (flags & FL_NEG)    *--p = '-';
+#if USE_PLUS_SIGN
                 else if (flags & FL_PLUS)   *--p = '+';
+#endif
+#if USE_SPACE_SIGN
                 else if (flags & FL_SPACE)  *--p = ' ';
+#endif
 #if USE_PRECISION
                 // Precision is not used to limit number output.
                 precision = -1;
