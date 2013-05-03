@@ -108,4 +108,21 @@ Feature configuration
 // Non-zero to include support for the left-justify '-' flag.
 #define USE_LEFT_JUST   1
 
+// Non-zero to include support for the %i synonym for %d
+#define USE_SIGNED_I    1
+
+// Non-zero to include support for the %u unsigned decimal specifier
+#define USE_UNSIGNED    1
+
+// Non-zero to include support for the %x hex specifier (lowercase output)
+#define USE_HEX_LOWER   1
+
+// Non-zero to include support for the %X hex specifier (uppercase output)
+#define USE_HEX_UPPER   1
+
+// Non-zero to force uppercase output with %x.
+// Used in conjunction with USE_HEX_LOWER.
+// Ignored if USE_HEX_UPPER is also set.
+#define USE_HEX_UPPER_L 1
+
 #endif
