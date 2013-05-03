@@ -102,4 +102,7 @@ Feature configuration
 // Non-zero to allow forcing a leading space (instead of + or -) in front of zero e.g. "% 3d"
 #define USE_SPACE_SIGN  1
 
+// Non-zero to include support for the left-justify '-' flag.
+#define USE_LEFT_JUST   1
+
 #endif
