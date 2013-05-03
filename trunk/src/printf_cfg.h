@@ -96,6 +96,9 @@ Feature configuration
 // Non-zero to allow use of leading zero padding e.g. "%03d"
 #define USE_ZERO_PAD    1
 
+// Non-zero to allow use of space padding e.g. "%3d" or "%12s"
+#define USE_SPACE_PAD   1
+
 // Non-zero to allow forcing a leading plus sign e.g. "%+3d"
 #define USE_PLUS_SIGN   1
 

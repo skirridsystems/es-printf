@@ -423,8 +423,10 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
     unsigned uvalue;
 #endif
     unsigned base;
+#if USE_SPACE_PAD || USE_ZERO_PAD
     int width;
     int fwidth;
+#endif
 #if USE_PRECISION
     int precision;
 #else
@@ -445,7 +447,9 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
     while ((convert = GET_FORMAT(fmt)) != 0)
     {
         p = buffer + BUFMAX;
+#if USE_SPACE_PAD || USE_ZERO_PAD
         width = 0;
+#endif
 #if USE_PRECISION
         precision = -1;
 #endif
@@ -497,6 +501,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
 #endif
                     break;
             }
+#if USE_SPACE_PAD || USE_ZERO_PAD
             // Extract width
 #if USE_INDIRECT
             if (convert == '*')
@@ -511,7 +516,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 width = width * 10 + convert - '0';
                 convert = GET_FORMAT(++fmt);
             }
-
+#endif
 #if USE_PRECISION
             // Extract precision
             if (convert == '.')
@@ -544,7 +549,9 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
             switch (convert)
             {
             case 'c':
+#if USE_SPACE_PAD
                 width = 0;
+#endif
                 *--p = (char) va_arg(ap, int);
                 break;
             case 'd':
@@ -607,9 +614,11 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 else            flags &= ~FL_SPECIAL;
 #endif
                 // Generate the number without any prefix yet.
+#if USE_ZERO_PAD
                 fwidth = width;
                 // Avoid formatting buffer overflow.
                 if (fwidth > BUFMAX) fwidth = BUFMAX;
+#endif
 #if USE_PRECISION
                 while (uvalue || precision > 0)
 #else
@@ -617,7 +626,9 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 {
                     // Avoid printing 0 as ' '
                     *--p = '0';
+#if USE_ZERO_PAD
                     --fwidth;
+#endif
                 }
                 while (uvalue)
 #endif
@@ -631,11 +642,14 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                     }
                     *--p = c;
                     uvalue /= base;
+#if USE_ZERO_PAD
                     --fwidth;
+#endif
 #if USE_PRECISION
                     --precision;
 #endif
                 }
+#if USE_ZERO_PAD
                 // Allocate space for the sign bit.
                 if (flags & (FL_PLUS|FL_NEG|FL_SPACE)) --fwidth;
 #if USE_SPECIAL
@@ -646,7 +660,6 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                     else fwidth -= 2;
                 }
 #endif
-#if USE_ZERO_PAD
                 // Add leading zero padding if required.
                 if ((flags & FL_ZERO_PAD) && !(flags & FL_LEFT_JUST))
                 {
@@ -723,6 +736,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
             *--p = convert;
         }
 
+#if USE_SPACE_PAD
         // Check width of formatted text.
         fwidth = strlen(p);
         // Copy formatted text with leading or trailing space.
@@ -731,10 +745,22 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
         {
             if (((flags & FL_LEFT_JUST) || width <= fwidth) && *p && precision != 0) c = *p++;
             else c = ' ';
+#else
+  #if USE_PRECISION
+        // A positive value for precision will limit the length of p used.
+        while (*p && precision != 0)
+  #else
+        while (*p)
+  #endif
+        {
+            c = *p++;
+#endif
             if (ptr != 0) *ptr++ = c;
             else func(c);
             ++count;
+#if USE_SPACE_PAD
             --width;
+#endif
 #if USE_PRECISION
             if (precision > 0) --precision;
 #endif
