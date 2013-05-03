@@ -75,6 +75,9 @@ DEALINGS IN THE SOFTWARE.
 
 int main(int argc, char *argv[])
 {
+#ifdef SIZE
+    tprintf("Size\n");
+#else
 #if USE_FLOAT
     double one = 1.0;
 #endif
@@ -99,6 +102,7 @@ int main(int argc, char *argv[])
     tprintf("%%g = %g %g %g %G\n", 1.23e-5, 1.23e-4, 1.23e5, 1.23e6);
     tprintf("Max/Min = %e %e\n", DBL_MAX, DBL_MIN);
     tprintf("NaN/Inf = %f %f\n", sqrt(-1), one / (one - 1.0));
+#endif
 #endif
     return 0;
 }
