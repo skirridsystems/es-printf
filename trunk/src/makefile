@@ -28,6 +28,7 @@
 # Define the main target to build
 MCU = atmega8
 TRG = Test
+STRG = Size
 SRC = test.c
 INC = printf.c printf.h printf_cfg.h
 
@@ -41,6 +42,7 @@ PC_GCC = gcc
 
 # Tools and directories
 OUT     = AVR_out
+SOUT    = AVR_size
 CC      = $(AVRGCC)/bin/avr-gcc
 RM      = $(AVRGCC)/utils/bin/rm -rf
 HEX     = $(AVRGCC)/bin/avr-objcopy
@@ -61,30 +63,42 @@ LDFLAGS = -mmcu=$(MCU) -Wl,-Map=$(basename $@).map,--cref -Wl,--relax -Wl,--gc-s
 
 # Derive all project specific object files
 OBJ = $(addprefix $(OUT)/,$(SRC:.c=.o))
+SOBJ = $(addprefix $(SOUT)/,$(SRC:.c=.o))
 
 #-----------------------------------------------------------------
 
 # Implicit rules for creating object from source.
 $(OUT)/%.o : %.c makefile $(INC)
 	$(CC) -c $(CPFLAGS) -I. $*.c -o $@
+$(SOUT)/%.o : %.c makefile $(INC)
+	$(CC) -c $(CPFLAGS) -DSIZE -I. $*.c -o $@
 
 #-----------------------------------------------------------------
 # This section defines the aims of the make process
 
-all: $(TRG).hex $(TRG).exe
+all: $(TRG).hex $(STRG).hex $(TRG).exe
 
 # Make sure the output directory exists
 $(OBJ): | $(OUT)
+$(SOBJ): | $(SOUT)
 
 $(OUT):
 	mkdir -p $(OUT)
+$(SOUT):
+	mkdir -p $(SOUT)
 
 $(TRG).hex: $(OUT)/$(TRG).elf
+	$(HEX) -O ihex $^ $@
+
+$(STRG).hex: $(SOUT)/$(STRG).elf
 	$(HEX) -O ihex $^ $@
 
 # Link main app object files into an ELF output file.
 $(OUT)/$(TRG).elf: $(OBJ)
 	$(CC) $(OBJ) $(LIB) $(LDFLAGS) -o $@
+
+$(SOUT)/$(STRG).elf: $(SOBJ)
+	$(CC) $(SOBJ) $(LIB) $(LDFLAGS) -o $@
 	$(AVRSIZE) $@
 
 # Generate PC executable
@@ -94,4 +108,4 @@ $(TRG).exe: $(SRC) $(INC) makefile
 #---------------------- MAKE CLEAN -------------------------------
 #make instruction to delete created files
 clean:
-	$(RM) \*.hex \*.exe $(OUT)
+	$(RM) \*.hex \*.exe $(OUT) $(SOUT)
