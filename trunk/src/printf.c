@@ -67,7 +67,11 @@ DEALINGS IN THE SOFTWARE.
 #endif
 
 // Bits in the flags variable
+#if USE_LEFT_JUST
 #define FL_LEFT_JUST    (1<<0)
+#else
+#define FL_LEFT_JUST    0
+#endif
 #define FL_ZERO_PAD     (1<<1)
 #define FL_SPECIAL      (1<<2)
 #define FL_PLUS         (1<<3)
@@ -470,11 +474,13 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 }
                 else
 #endif
+#if USE_LEFT_JUST
                 if (convert == '-')
                 {
                     flags |= FL_LEFT_JUST;
                 }
                 else
+#endif
 #if USE_SPACE_SIGN
                 if (convert == ' ')
                 {
