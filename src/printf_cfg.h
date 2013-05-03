@@ -83,31 +83,6 @@ Feature configuration
 // Non-zero to include support for octal formatting
 #define USE_OCTAL       1
 
-// Non-zero to include precision support when floating point is not present.
-// Precision is automatically enabled when floating point support is used.
-#define USE_PRECISION   1
-
-// Non-zero to include support for the special '#' flag.
-#define USE_SPECIAL     1
-
-// Non-zero to include indirect width/precision support e.g. "%*d"
-#define USE_INDIRECT    1
-
-// Non-zero to allow use of leading zero padding e.g. "%03d"
-#define USE_ZERO_PAD    1
-
-// Non-zero to allow use of space padding e.g. "%3d" or "%12s"
-#define USE_SPACE_PAD   1
-
-// Non-zero to allow forcing a leading plus sign e.g. "%+3d"
-#define USE_PLUS_SIGN   1
-
-// Non-zero to allow forcing a leading space (instead of + or -) in front of zero e.g. "% 3d"
-#define USE_SPACE_SIGN  1
-
-// Non-zero to include support for the left-justify '-' flag.
-#define USE_LEFT_JUST   1
-
 // Non-zero to include support for the %i synonym for %d
 #define USE_SIGNED_I    1
 
@@ -124,5 +99,30 @@ Feature configuration
 // Used in conjunction with USE_HEX_LOWER.
 // Ignored if USE_HEX_UPPER is also set.
 #define USE_HEX_UPPER_L 1
+
+// Non-zero to include precision support when floating point is not present.
+// Precision is automatically enabled when floating point support is used.
+#define USE_PRECISION   1
+
+// Non-zero to allow use of leading zero padding e.g. "%03d"
+#define USE_ZERO_PAD    1
+
+// Non-zero to allow use of space padding e.g. "%3d" or "%12s"
+#define USE_SPACE_PAD   1
+
+// Non-zero to include indirect width/precision support e.g. "%*d"
+#define USE_INDIRECT    1
+
+// Non-zero to allow forcing a leading plus sign e.g. "%+3d"
+#define USE_PLUS_SIGN   1
+
+// Non-zero to allow forcing a leading space (instead of + or -) in front of zero e.g. "% 3d"
+#define USE_SPACE_SIGN  1
+
+// Non-zero to include support for the left-justify '-' flag.
+#define USE_LEFT_JUST   1
+
+// Non-zero to include support for the special '#' flag.
+#define USE_SPECIAL     1
 
 #endif
