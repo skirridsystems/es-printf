@@ -80,6 +80,9 @@ Feature configuration
 // Non-zero to include support for long integers
 #define USE_LONG        1
 
+// Non-zero to include support for octal formatting
+#define USE_OCTAL       1
+
 // Non-zero to include precision support when floating point is not present.
 // Precision is automatically enabled when floating point support is used.
 #define USE_PRECISION   1

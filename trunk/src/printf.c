@@ -556,6 +556,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                     uvalue = va_arg(ap, unsigned);
                 base = 10;
                 goto number;
+#if USE_OCTAL
             case 'o':
 #if USE_LONG
                 if (flags & FL_LONG)
@@ -565,6 +566,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                     uvalue = va_arg(ap, unsigned);
                 base = 8;
                 goto number;
+#endif
             case 'x':
             case 'X':
 #if USE_LONG
