@@ -555,7 +555,9 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 *--p = (char) va_arg(ap, int);
                 break;
             case 'd':
+#if USE_SIGNED_I
             case 'i':
+#endif
 #if USE_LONG
                 if (flags & FL_LONG)
                     value = va_arg(ap, long);
@@ -574,6 +576,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 uvalue = (unsigned) value;
 #endif
                 goto number;
+#if USE_UNSIGNED
             case 'u':
 #if USE_LONG
                 if (flags & FL_LONG)
@@ -583,6 +586,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                     uvalue = va_arg(ap, unsigned);
                 base = 10;
                 goto number;
+#endif
 #if USE_OCTAL
             case 'o':
 #if USE_LONG
@@ -594,8 +598,13 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 base = 8;
                 goto number;
 #endif
+#if USE_HEX_LOWER
             case 'x':
+#endif
+#if USE_HEX_UPPER
             case 'X':
+#endif
+#if USE_HEX_LOWER || USE_HEX_UPPER
 #if USE_LONG
                 if (flags & FL_LONG)
                     uvalue = va_arg(ap, unsigned long);
@@ -603,6 +612,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
 #endif
                     uvalue = va_arg(ap, unsigned);
                 base = 16;
+#endif
             number:
 #if USE_PRECISION
                 // Set default precision
@@ -634,12 +644,20 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
 #endif
                 {
                     c = (char) ((uvalue % base) + '0');
+#if USE_HEX_LOWER || USE_HEX_UPPER
                     if (c > '9')
                     {
                         // Hex digits
+#if USE_HEX_LOWER && USE_HEX_UPPER
                         if (convert == 'X') c += 'A' - '0' - 10;
                         else                c += 'a' - '0' - 10;
+#elif USE_HEX_UPPER || USE_HEX_UPPER_L
+                        c += 'A' - '0' - 10;
+#else
+                        c += 'a' - '0' - 10;
+#endif
                     }
+#endif
                     *--p = c;
                     uvalue /= base;
 #if USE_ZERO_PAD

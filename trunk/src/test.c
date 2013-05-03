@@ -84,7 +84,9 @@ int main(int argc, char *argv[])
     tprintf("Hello world %% %z\n");
 #if USE_SPACE_PAD || USE_ZERO_PAD
     tprintf("Int %d %4d %04d %+04d % 4d %-4d. %+3d %+3d % 3d % 3d\n", N, N, N, N, N, N, 0, -1, 0, -1);
+  #if USE_HEX_UPPER || USE_HEX_LOWER
     tprintf("Hex %x %4x %018X %+x % x %-4x. %+#x\n", X, X, X, X, X, X, X);
+  #endif
   #if USE_OCTAL
     tprintf("Oct %o %4o %04o %+o % o %-4o. %+#o\n", O, O, O, O, O, O, O);
   #endif
@@ -97,7 +99,9 @@ int main(int argc, char *argv[])
   #endif
 #else
     tprintf("Int %d %+d %+d % d % d\n", N, 0, -1, 0, -1);
+  #if USE_HEX_UPPER || USE_HEX_LOWER
     tprintf("Hex %x %+x % x\n", X, X, X);
+  #endif
   #if USE_OCTAL
     tprintf("Oct %o %+o % o\n", O, O, O);
   #endif
