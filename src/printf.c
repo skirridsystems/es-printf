@@ -60,6 +60,12 @@ DEALINGS IN THE SOFTWARE.
     #define BUFMAX  16
 #endif
 
+// Precision is required for floating point support
+#if USE_FLOAT && !USE_PRECISION
+    #undef USE_PRECISION
+    #define USE_PRECISION   1
+#endif
+
 // Bits in the flags variable
 #define FL_LEFT_JUST    (1<<0)
 #define FL_ZERO_PAD     (1<<1)
@@ -411,7 +417,11 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
     unsigned base;
     int width;
     int fwidth;
+#if USE_PRECISION
     int precision;
+#else
+    #define precision -1
+#endif
     char convert, c;
     char *p;
     char buffer[BUFMAX+1];
@@ -428,7 +438,9 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
     {
         p = buffer + BUFMAX;
         width = 0;
+#if USE_PRECISION
         precision = -1;
+#endif
         flags = 0;
 #if USE_FLOAT
         fflags = 0;
@@ -456,10 +468,12 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 {
                     flags |= FL_SPACE;
                 }
+#if USE_SPECIAL
                 else if (convert == '#')
                 {
                     flags |= FL_SPECIAL;
                 }
+#endif
                 else
                     break;
             }
@@ -476,6 +490,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 convert = GET_FORMAT(++fmt);
             }
 
+#if USE_PRECISION
             // Extract precision
             if (convert == '.')
             {
@@ -493,7 +508,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                     convert = GET_FORMAT(++fmt);
                 }
             }
-
+#endif
 #if USE_LONG
             // Extract length modifier
             if (convert == 'l')
@@ -556,16 +571,30 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                     uvalue = va_arg(ap, unsigned);
                 base = 16;
             number:
+#if USE_PRECISION
                 // Set default precision
                 if (precision == -1) precision = 1;
+#endif
                 // Make sure options are valid.
                 if (base != 10) flags &= ~(FL_PLUS|FL_NEG|FL_SPACE);
+#if USE_SPECIAL
                 else            flags &= ~FL_SPECIAL;
+#endif
                 // Generate the number without any prefix yet.
                 fwidth = width;
                 // Avoid formatting buffer overflow.
                 if (fwidth > BUFMAX) fwidth = BUFMAX;
+#if USE_PRECISION
                 while (uvalue || precision > 0)
+#else
+                if (uvalue == 0)
+                {
+                    // Avoid printing 0 as ' '
+                    *--p = '0';
+                    --fwidth;
+                }
+                while (uvalue)
+#endif
                 {
                     c = (char) ((uvalue % base) + '0');
                     if (c > '9')
@@ -577,16 +606,20 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                     *--p = c;
                     uvalue /= base;
                     --fwidth;
+#if USE_PRECISION
                     --precision;
+#endif
                 }
                 // Allocate space for the sign bit.
                 if (flags & (FL_PLUS|FL_NEG|FL_SPACE)) --fwidth;
+#if USE_SPECIAL
                 // Allocate space for special chars if required.
                 if (flags & FL_SPECIAL)
                 {
                     if (convert == 'o') fwidth -= 1;
                     else fwidth -= 2;
                 }
+#endif
                 // Add leading zero padding if required.
                 if ((flags & FL_ZERO_PAD) && !(flags & FL_LEFT_JUST))
                 {
@@ -596,18 +629,22 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                         --fwidth;
                     }
                 }
+#if USE_SPECIAL
                 // Add special prefix if required.
                 if (flags & FL_SPECIAL)
                 {
                     if (convert != 'o') *--p = convert;
                     *--p = '0';
                 }
+#endif
                 // Add the sign prefix
                 if      (flags & FL_NEG)    *--p = '-';
                 else if (flags & FL_PLUS)   *--p = '+';
                 else if (flags & FL_SPACE)  *--p = ' ';
+#if USE_PRECISION
                 // Precision is not used to limit number output.
                 precision = -1;
+#endif
                 break;
 #if USE_FLOAT
             case 'f':
@@ -666,7 +703,9 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
             else func(c);
             ++count;
             --width;
+#if USE_PRECISION
             if (precision > 0) --precision;
+#endif
         }
         ++fmt;
     }
