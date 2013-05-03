@@ -478,12 +478,14 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                     break;
             }
             // Extract width
+#if USE_INDIRECT
             if (convert == '*')
             {
                 width = va_arg(ap, int);
                 convert = GET_FORMAT(++fmt);
             }
             else
+#endif
             while (convert >= '0' && convert <= '9')
             {
                 width = width * 10 + convert - '0';
@@ -496,12 +498,14 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
             {
                 precision = 0;
                 convert = GET_FORMAT(++fmt);
+#if USE_INDIRECT
                 if (convert == '*')
                 {
                     precision = va_arg(ap, int);
                     convert = GET_FORMAT(++fmt);
                 }
                 else
+#endif
                 while (convert >= '0' && convert <= '9')
                 {
                     precision = precision * 10 + convert - '0';

@@ -73,15 +73,19 @@ DEALINGS IN THE SOFTWARE.
 #define O   023
 #define S   "Abcde"
 
-double one = 1.0;
-
 int main(int argc, char *argv[])
 {
+#if USE_FLOAT
+    double one = 1.0;
+#endif
     tprintf("Hello world %% %z\n");
-    tprintf("Int %d %*d %4d %04d %+04d % 4d %-4d. %+3d %+3d % 3d % 3d\n", N, 4, N, N, N, N, N, N, 0, 0, -1, -1);
+    tprintf("Int %d %4d %04d %+04d % 4d %-4d. %+3d %+3d % 3d % 3d\n", N, N, N, N, N, N, 0, 0, -1, -1);
     tprintf("Hex %x %4x %018X %+x %+#x % x %-x.\n", X, X, X, X, X, X, X);
     tprintf("Oct %o %4o %04o %+o %+#o % o %-o.\n", O, O, O, O, O, O, O);
-    tprintf("Str %s %4s %-4s %*s.\n", S, S, S, 4, S);
+    tprintf("Str %s %4s %-4s.\n", S, S, S);
+#if USE_INDIRECT
+    tprintf("Ind %*d %*s.\n", 4, N, 8, S);
+#endif
 #if USE_PRECISION
     tprintf("Prec %.d %.2d %.2d %.2d %-5.3s %.3s.\n", 0, 1, 0, -1, S, S);
 #endif

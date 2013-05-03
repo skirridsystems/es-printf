@@ -87,4 +87,7 @@ Feature configuration
 // Non-zero to include support for the special '#' flag.
 #define USE_SPECIAL     1
 
+// Non-zero to include indirect width/precision support e.g. "%*d"
+#define USE_INDIRECT    1
+
 #endif
