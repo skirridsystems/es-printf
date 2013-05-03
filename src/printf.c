@@ -53,7 +53,12 @@ DEALINGS IN THE SOFTWARE.
     #define sprintf sprintf_rom
 #endif
 
-#define BUFMAX  30      // Size of buffer for formatting numbers into
+// Size of buffer for formatting numbers into
+#if USE_FLOAT
+    #define BUFMAX  30
+#else
+    #define BUFMAX  16
+#endif
 
 // Bits in the flags variable
 #define FL_LEFT_JUST    (1<<0)
@@ -78,6 +83,7 @@ DEALINGS IN THE SOFTWARE.
   #define FLOAT_DIGITS  8
 #endif
 
+#if USE_FLOAT
 static const double smalltable[] = {
 #ifndef NO_DOUBLE_PRECISION
     1e-256, 1e-128, 1e-64,
@@ -391,6 +397,7 @@ static char *format_float(double number, int ndigits, unsigned char flags, unsig
     *pend = '\0';   // Add null terminator
     return p;       // Start of string
 }
+#endif
 
 static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
 {
@@ -405,8 +412,10 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
     char buffer[BUFMAX+1];
     int  count = 0;
     unsigned char flags;
+#if USE_FLOAT
     unsigned char fflags;
     double fvalue;
+#endif
 
     buffer[BUFMAX] = '\0';
 
@@ -416,7 +425,9 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
         width = 0;
         precision = -1;
         flags = 0;
+#if USE_FLOAT
         fflags = 0;
+#endif
 
         if (convert == '%')
         {
@@ -580,6 +591,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 // Precision is not used to limit number output.
                 precision = -1;
                 break;
+#if USE_FLOAT
             case 'f':
                 // Set default precision
                 if (precision == -1) precision = 6;
@@ -610,6 +622,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 // Precision is not used to limit number output.
                 precision = -1;
                 break;
+#endif
             case 's':
                 p = va_arg(ap, char *);
                 break;

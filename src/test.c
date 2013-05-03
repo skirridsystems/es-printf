@@ -73,15 +73,17 @@ DEALINGS IN THE SOFTWARE.
 #define O   023
 #define S   "Abcde"
 
+double one = 1.0;
+
 int main(int argc, char *argv[])
 {
-    double one = 1.0;
-    tprintf("Hello world\n");
+    tprintf("Hello world %% %z\n");
     tprintf("Int %d %*d %4d %04d %+04d % 4d %-4d. %+3d %+3d % 3d % 3d\n", N, 4, N, N, N, N, N, N, 0, 0, -1, -1);
     tprintf("Hex %x %4x %018X %+x %+#x % x %-x.\n", X, X, X, X, X, X, X);
     tprintf("Oct %o %4o %04o %+o %+#o % o %-o.\n", O, O, O, O, O, O, O);
     tprintf("Str %s %4s %-4s %*s.\n", S, S, S, 4, S);
     tprintf("Prec %.d %.2d %.2d %.2d %-5.3s %.3s.\n", 0, 1, 0, -1, S, S);
+#if USE_FLOAT
     tprintf("pi = %f %e %g\n", PI, PI, PI);
     tprintf("f6dig = %.0f %e %g\n", F6, F6, F6);
     tprintf("flarge = %f %e %g\n", FL, FL, FL);
@@ -89,5 +91,6 @@ int main(int argc, char *argv[])
     tprintf("%%g = %g %g %g %G\n", 1.23e-5, 1.23e-4, 1.23e5, 1.23e6);
     tprintf("Max/Min = %e %e\n", DBL_MAX, DBL_MIN);
     tprintf("NaN/Inf = %f %f\n", sqrt(-1), one / (one - 1.0));
+#endif
     return 0;
 }
