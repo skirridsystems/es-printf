@@ -82,17 +82,29 @@ int main(int argc, char *argv[])
     double one = 1.0;
 #endif
     tprintf("Hello world %% %z\n");
+#if USE_SPACE_PAD || USE_ZERO_PAD
     tprintf("Int %d %4d %04d %+04d % 4d %-4d. %+3d %+3d % 3d % 3d\n", N, N, N, N, N, N, 0, -1, 0, -1);
     tprintf("Hex %x %4x %018X %+x % x %-4x. %+#x\n", X, X, X, X, X, X, X);
-#if USE_OCTAL
+  #if USE_OCTAL
     tprintf("Oct %o %4o %04o %+o % o %-4o. %+#o\n", O, O, O, O, O, O, O);
-#endif
+  #endif
     tprintf("Str [%s] [%8s] [%-8s]\n", S, S, S);
-#if USE_INDIRECT
+  #if USE_INDIRECT
     tprintf("Ind %*d %*s.\n", 4, N, 8, S);
-#endif
-#if USE_PRECISION
+  #endif
+  #if USE_PRECISION
     tprintf("Prec %.d %.2d %.2d %.2d %-5.3s %.3s.\n", 0, 1, 0, -1, S, S);
+  #endif
+#else
+    tprintf("Int %d %+d %+d % d % d\n", N, 0, -1, 0, -1);
+    tprintf("Hex %x %+x % x\n", X, X, X);
+  #if USE_OCTAL
+    tprintf("Oct %o %+o % o\n", O, O, O);
+  #endif
+    tprintf("Str [%s]\n", S);
+  #if USE_PRECISION
+    tprintf("Prec %.d %.2d %.2d %.2d %.3s.\n", 0, 1, 0, -1, S);
+  #endif
 #endif
 #if USE_FLOAT
     tprintf("pi = %f %e %g\n", PI, PI, PI);
