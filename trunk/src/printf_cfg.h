@@ -64,7 +64,7 @@ extern void UARTSendByte(char c);
 /*************************************************************************
 Compiler capability configuration
 
-Set some options that the C pre-processor will not tell use about.
+Set some options that the C pre-processor will not tell us about.
 *************************************************************************/
 
 // Does the compiler support double precision or silently degrade to single?
@@ -73,5 +73,8 @@ Set some options that the C pre-processor will not tell use about.
 /*************************************************************************
 Feature configuration
 *************************************************************************/
+
+// Non-zero to include floating point number support
+#define USE_FLOAT       1
 
 #endif
