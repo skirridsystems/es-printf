@@ -77,4 +77,7 @@ Feature configuration
 // Non-zero to include floating point number support
 #define USE_FLOAT       1
 
+// Non-zero to include support for long integers
+#define USE_LONG        1
+
 #endif

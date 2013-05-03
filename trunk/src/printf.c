@@ -401,8 +401,13 @@ static char *format_float(double number, int ndigits, unsigned char flags, unsig
 
 static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
 {
+#if USE_LONG
     long value;
     unsigned long uvalue;
+#else
+    int value;
+    unsigned uvalue;
+#endif
     unsigned base;
     int width;
     int fwidth;
@@ -489,13 +494,14 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 }
             }
 
+#if USE_LONG
             // Extract length modifier
             if (convert == 'l')
             {
                 flags |= FL_LONG;
                 convert = GET_FORMAT(++fmt);
             }
-
+#endif
             switch (convert)
             {
             case 'c':
@@ -504,9 +510,11 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                 break;
             case 'd':
             case 'i':
+#if USE_LONG
                 if (flags & FL_LONG)
                     value = va_arg(ap, long);
                 else
+#endif
                     value = va_arg(ap, int);
                 base = 10;
                 if (value < 0)
@@ -514,27 +522,37 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
                     flags |= FL_NEG;
                     value = -value;
                 }
+#if USE_LONG
+                uvalue = (unsigned long) value;
+#else
                 uvalue = (unsigned) value;
+#endif
                 goto number;
             case 'u':
+#if USE_LONG
                 if (flags & FL_LONG)
                     uvalue = va_arg(ap, unsigned long);
                 else
+#endif
                     uvalue = va_arg(ap, unsigned);
                 base = 10;
                 goto number;
             case 'o':
+#if USE_LONG
                 if (flags & FL_LONG)
                     uvalue = va_arg(ap, unsigned long);
                 else
+#endif
                     uvalue = va_arg(ap, unsigned);
                 base = 8;
                 goto number;
             case 'x':
             case 'X':
+#if USE_LONG
                 if (flags & FL_LONG)
                     uvalue = va_arg(ap, unsigned long);
                 else
+#endif
                     uvalue = va_arg(ap, unsigned);
                 base = 16;
             number:
