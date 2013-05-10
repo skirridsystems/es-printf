@@ -79,7 +79,7 @@ DEALINGS IN THE SOFTWARE.
 
 int main(int argc, char *argv[])
 {
-    char buf[20];
+    char buf[32];
 #ifdef SIZE
     tsprintf(buf, "Size %d\n", 123);
     tprintf("Size %d\n", 123);
