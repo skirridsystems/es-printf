@@ -81,8 +81,8 @@ int main(int argc, char *argv[])
 {
     char buf[20];
 #ifdef SIZE
-    tsprintf(buf, "Size\n");
-    tprintf("Size\n");
+    tsprintf(buf, "Size %d\n", 123);
+    tprintf("Size %d\n", 123);
 #else
 #if USE_FLOAT
     double one = 1.0;
