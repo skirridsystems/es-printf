@@ -43,7 +43,8 @@ DEALINGS IN THE SOFTWARE.
 /* Force printf.c to rename the functions so we can use both
    the standard library and our own version for side-by-side tests.
 */
-#define printf x   
+#define printf x
+#define sprintf x
 
 /* Include the printf source here so we can control the definitions
    used in the test environment. You would not normally need to do this.
@@ -55,12 +56,15 @@ DEALINGS IN THE SOFTWARE.
        with strings in flash.
     */
     #define tprintf(format, args...)        printf_rom(PSTR(format), ## args)
+    #define tsprintf(buf, format, args...)  sprintf_rom(buf, PSTR(format), ## args)
 #else
     /* In the PC test environment reinstate printf to call the normal library function.
        Define a new macro which calls both the library and our own versions of printf.
     */
     #undef printf
+    #undef sprintf
     #define tprintf(format, args...)        do { printf(format, ## args); printf_rom(format, ## args); } while(0)
+    #define tsprintf(buf, format, args...)  do { printf(format, ## args); sprintf_rom(buf, format, ##args); printf("%s", buf); } while(0)
 #endif
 
 
@@ -75,13 +79,15 @@ DEALINGS IN THE SOFTWARE.
 
 int main(int argc, char *argv[])
 {
+    char buf[20];
 #ifdef SIZE
+    tsprintf(buf, "Size\n");
     tprintf("Size\n");
 #else
 #if USE_FLOAT
     double one = 1.0;
 #endif
-    tprintf("Hello world %% %z\n");
+    tsprintf(buf, "Hello world %d %% %z\n", 123);
 #if USE_SPACE_PAD || USE_ZERO_PAD
     tprintf("Int %d %4d %04d %+04d % 4d %-4d. %+3d %+3d % 3d % 3d\n", N, N, N, N, N, N, 0, -1, 0, -1);
   #if USE_HEX_UPPER || USE_HEX_LOWER
