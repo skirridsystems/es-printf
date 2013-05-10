@@ -413,7 +413,7 @@ static char *format_float(double number, int ndigits, unsigned char flags, unsig
 }
 #endif
 
-static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
+static int doprnt(void *context, void (*func)(char c, void *context), const char *fmt, va_list ap)
 {
 #if USE_LONG
     long value;
@@ -773,8 +773,7 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
         {
             c = *p++;
 #endif
-            if (ptr != 0) *ptr++ = c;
-            else func(c);
+            func(c, context);   // Output function.
             ++count;
 #if USE_SPACE_PAD
             --width;
@@ -786,9 +785,15 @@ static int doprnt(char *ptr, void (*func)(char c), const char *fmt, va_list ap)
         ++fmt;
     }
 
-    if (ptr != 0) *ptr = '\0';
-    
     return count;
+}
+
+// Output function for printf.
+// The context is not used at present, but could be extended to include
+// streams or to avoid output mixing in multi-threaded use.
+static void putout(char c, void *context)
+{
+    PUTCHAR_FUNC(c);
 }
 
 // printf replacement - writes to serial output using putchar.
@@ -798,10 +803,20 @@ int printf(const char *fmt, ...)
     int Count;
 
     va_start(ap, fmt);
-    Count = doprnt((char *)0, (void (*)(char))PUTCHAR_FUNC, fmt, ap);
+    Count = doprnt((void *)0, putout, fmt, ap);
     va_end(ap);
     
     return Count;
+}
+
+// Output function for sprintf.
+// Here the context is a pointer to a pointer to the buffer.
+// Double indirection allows the function to increment the buffer pointer.
+static void putbuf(char c, void *context)
+{
+    char *buf = *((char **) context);
+    *buf++ = c;
+    *((char **) context) = buf;
 }
 
 //  sprintf replacement - writes into buffer supplied.
@@ -811,8 +826,10 @@ int sprintf(char *buf, const char *fmt, ... )
     int Count;
 
     va_start(ap, fmt);
-    Count = doprnt(buf, 0, fmt, ap);
+    Count = doprnt(&buf, putbuf, fmt, ap);
     va_end(ap);
+    // Append null terminator.
+    buf[Count] = '\0';
     
     return Count;
 }
