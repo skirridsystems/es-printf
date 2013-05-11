@@ -446,20 +446,20 @@ static int doprnt(void *context, void (*func)(char c, void *context), const char
 
     while ((convert = GET_FORMAT(fmt)) != 0)
     {
-        p = buffer + BUFMAX;
-#if USE_SPACE_PAD || USE_ZERO_PAD
-        width = 0;
-#endif
-#if USE_PRECISION
-        precision = -1;
-#endif
-        flags = 0;
-#if USE_FLOAT
-        fflags = 0;
-#endif
-
         if (convert == '%')
         {
+            p = buffer + BUFMAX;
+#if USE_SPACE_PAD || USE_ZERO_PAD
+            width = 0;
+#endif
+#if USE_PRECISION
+            precision = -1;
+#endif
+            flags = 0;
+#if USE_FLOAT
+            fflags = 0;
+#endif
+
             // Extract flag chars
             for (;;)
             {
@@ -748,39 +748,40 @@ static int doprnt(void *context, void (*func)(char c, void *context), const char
                 *--p = convert;
                 break;
             }
+
+#if USE_SPACE_PAD
+            // Check width of formatted text.
+            fwidth = strlen(p);
+            // Copy formatted text with leading or trailing space.
+            // A positive value for precision will limit the length of p used.
+            while ((*p && precision != 0) || width > 0)
+            {
+                if (((flags & FL_LEFT_JUST) || width <= fwidth) && *p && precision != 0) c = *p++;
+                else c = ' ';
+#else
+  #if USE_PRECISION
+            // A positive value for precision will limit the length of p used.
+            while (*p && precision != 0)
+  #else
+            while (*p)
+  #endif
+            {
+                c = *p++;
+#endif
+                func(c, context);   // Output function.
+                ++count;
+#if USE_SPACE_PAD
+                --width;
+#endif
+#if USE_PRECISION
+                if (precision > 0) --precision;
+#endif
+            }
         }
         else
         {
-            *--p = convert;
-        }
-
-#if USE_SPACE_PAD
-        // Check width of formatted text.
-        fwidth = strlen(p);
-        // Copy formatted text with leading or trailing space.
-        // A positive value for precision will limit the length of p used.
-        while ((*p && precision != 0) || width > 0)
-        {
-            if (((flags & FL_LEFT_JUST) || width <= fwidth) && *p && precision != 0) c = *p++;
-            else c = ' ';
-#else
-  #if USE_PRECISION
-        // A positive value for precision will limit the length of p used.
-        while (*p && precision != 0)
-  #else
-        while (*p)
-  #endif
-        {
-            c = *p++;
-#endif
-            func(c, context);   // Output function.
+            func(convert, context);   // Output function.
             ++count;
-#if USE_SPACE_PAD
-            --width;
-#endif
-#if USE_PRECISION
-            if (precision > 0) --precision;
-#endif
         }
         ++fmt;
     }
