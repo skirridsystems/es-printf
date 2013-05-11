@@ -46,13 +46,31 @@ extern int sprintf_rom(char *, const char *, ...);
 extern int printf_rom(const char *, ...);
 */
 
+/*************************************************************************
+Number of chars output
+
+Traditionally printf returns the number of chars output. If you are not
+interested in that value you can leave PRINTF_T undefined.
+On a small micro you can define the return type as unsigned char if you
+are sure the total output width will never exceed 255, or unsigned short.
+*************************************************************************/
+
+//#define PRINTF_T unsigned short
+
+// Create a type definition for the return value
+#ifndef PRINTF_T
+typedef void printf_t;
+#else
+typedef PRINTF_T printf_t;
+#endif
+
 /* The standard declarations of printf and sprintf. */
 #ifndef printf
-extern int printf(const char *, ...);
+extern printf_t printf(const char *, ...);
 #endif
 
 #ifndef sprintf
-extern int sprintf(char *, const char *, ...);
+extern printf_t sprintf(char *, const char *, ...);
 #endif
 
 #endif

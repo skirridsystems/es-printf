@@ -413,7 +413,7 @@ static char *format_float(double number, int ndigits, unsigned char flags, unsig
 }
 #endif
 
-static int doprnt(void *context, void (*func)(char c, void *context), const char *fmt, va_list ap)
+static printf_t doprnt(void *context, void (*func)(char c, void *context), const char *fmt, va_list ap)
 {
 #if USE_LONG
     unsigned long uvalue;
@@ -433,7 +433,9 @@ static int doprnt(void *context, void (*func)(char c, void *context), const char
     char convert, c;
     char *p;
     char buffer[BUFMAX+1];
-    int  count = 0;
+#ifdef PRINTF_T
+    printf_t count = 0;
+#endif
     unsigned char flags;
 #if USE_FLOAT
     unsigned char fflags;
@@ -766,7 +768,9 @@ static int doprnt(void *context, void (*func)(char c, void *context), const char
                 c = *p++;
 #endif
                 func(c, context);   // Output function.
+#ifdef PRINTF_T
                 ++count;
+#endif
 #if USE_SPACE_PAD
                 --width;
 #endif
@@ -778,12 +782,16 @@ static int doprnt(void *context, void (*func)(char c, void *context), const char
         else
         {
             func(convert, context);   // Output function.
+#ifdef PRINTF_T
             ++count;
+#endif
         }
         ++fmt;
     }
 
+#ifdef PRINTF_T
     return count;
+#endif
 }
 
 // Output function for printf.
@@ -795,16 +803,24 @@ static void putout(char c, void *context)
 }
 
 // printf replacement - writes to serial output using putchar.
-int printf(const char *fmt, ...)
+printf_t printf(const char *fmt, ...)
 {
     va_list ap;
+#ifdef PRINTF_T
     int Count;
+#endif
 
     va_start(ap, fmt);
+#ifdef PRINTF_T
     Count = doprnt((void *)0, putout, fmt, ap);
+#else
+    doprnt((void *)0, putout, fmt, ap);
+#endif
     va_end(ap);
     
+#ifdef PRINTF_T
     return Count;
+#endif
 }
 
 // Output function for sprintf.
@@ -818,16 +834,24 @@ static void putbuf(char c, void *context)
 }
 
 //  sprintf replacement - writes into buffer supplied.
-int sprintf(char *buf, const char *fmt, ... )
+printf_t sprintf(char *buf, const char *fmt, ... )
 {
     va_list ap;
+#ifdef PRINTF_T
     int Count;
+#endif
 
     va_start(ap, fmt);
+#ifdef PRINTF_T
     Count = doprnt(&buf, putbuf, fmt, ap);
+#else
+    doprnt(&buf, putbuf, fmt, ap);
+#endif
     va_end(ap);
     // Append null terminator.
     *buf = '\0';
     
+#ifdef PRINTF_T
     return Count;
+#endif
 }
