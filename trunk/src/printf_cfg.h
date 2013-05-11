@@ -71,6 +71,20 @@ Set some options that the C pre-processor will not tell us about.
 // #define NO_DOUBLE_PRECISION
 
 /*************************************************************************
+Formatted item width
+
+Since it is extremely unlikely that you will ever want to use a formatted
+width for a single item of more than 127 chars (i.e. the expanded and
+padded size of a single % expression), the width variables can normally
+be restricted to 8 bits. On small micros this saves a lot of code and
+variable space. On a 32-bit RISC it may increase code size due to type
+conversions. Choose the variable type to suit your CPU.
+Note that a signed type is required.
+*************************************************************************/
+
+typedef signed char width_t;
+
+/*************************************************************************
 Feature configuration
 *************************************************************************/
 
