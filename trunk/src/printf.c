@@ -416,10 +416,8 @@ static char *format_float(double number, int ndigits, unsigned char flags, unsig
 static int doprnt(void *context, void (*func)(char c, void *context), const char *fmt, va_list ap)
 {
 #if USE_LONG
-    long value;
     unsigned long uvalue;
 #else
-    int value;
     unsigned uvalue;
 #endif
     unsigned base;
@@ -560,21 +558,20 @@ static int doprnt(void *context, void (*func)(char c, void *context), const char
 #endif
 #if USE_LONG
                 if (flags & FL_LONG)
-                    value = va_arg(ap, long);
+                    uvalue = va_arg(ap, long);
                 else
 #endif
-                    value = va_arg(ap, int);
+                    uvalue = va_arg(ap, int);
                 base = 10;
-                if (value < 0)
+#if USE_LONG
+                if ((long) uvalue < 0)
+#else
+                if ((int) uvalue < 0)
+#endif
                 {
                     flags |= FL_NEG;
-                    value = -value;
+                    uvalue = -uvalue;
                 }
-#if USE_LONG
-                uvalue = (unsigned long) value;
-#else
-                uvalue = (unsigned) value;
-#endif
                 goto number;
 #if USE_UNSIGNED
             case 'u':
