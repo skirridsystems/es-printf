@@ -422,11 +422,11 @@ static int doprnt(void *context, void (*func)(char c, void *context), const char
 #endif
     unsigned base;
 #if USE_SPACE_PAD || USE_ZERO_PAD
-    int width;
-    int fwidth;
+    width_t width;
+    width_t fwidth;
 #endif
 #if USE_PRECISION
-    int precision;
+    width_t precision;
 #else
     #define precision -1
 #endif
