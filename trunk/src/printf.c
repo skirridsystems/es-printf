@@ -829,7 +829,7 @@ int sprintf(char *buf, const char *fmt, ... )
     Count = doprnt(&buf, putbuf, fmt, ap);
     va_end(ap);
     // Append null terminator.
-    buf[Count] = '\0';
+    *buf = '\0';
     
     return Count;
 }
