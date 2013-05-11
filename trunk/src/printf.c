@@ -449,16 +449,16 @@ static int doprnt(void *context, void (*func)(char c, void *context), const char
         if (convert == '%')
         {
             p = buffer + BUFMAX;
-#if USE_SPACE_PAD || USE_ZERO_PAD
-            width = 0;
-#endif
 #if USE_PRECISION
             precision = -1;
 #endif
-            flags = 0;
+#if USE_SPACE_PAD || USE_ZERO_PAD
+            width = 0;
+#endif
 #if USE_FLOAT
             fflags = 0;
 #endif
+            flags = 0;
 
             // Extract flag chars
             for (;;)
