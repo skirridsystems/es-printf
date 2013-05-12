@@ -53,21 +53,25 @@ DEALINGS IN THE SOFTWARE.
     #define sprintf sprintf_rom
 #endif
 
+// Macro used to check presence of a feature flag.
+// These are defined in print_cfg.h
+#define FEATURE(flag)   (FEATURE_FLAGS & (flag))
+
 // Size of buffer for formatting numbers into
-#if USE_FLOAT
+#if FEATURE(USE_FLOAT)
     #define BUFMAX  30
 #else
     #define BUFMAX  16
 #endif
 
 // Precision is required for floating point support
-#if USE_FLOAT && !USE_PRECISION
-    #undef USE_PRECISION
-    #define USE_PRECISION   1
+#if FEATURE(USE_FLOAT) && !FEATURE(USE_PRECISION)
+    #undef FEATURE(USE_PRECISION)
+    #define FEATURE(USE_PRECISION)   1
 #endif
 
 // Bits in the flags variable
-#if USE_LEFT_JUST
+#if FEATURE(USE_LEFT_JUST)
 #define FL_LEFT_JUST    (1<<0)
 #else
 #define FL_LEFT_JUST    0
@@ -93,7 +97,7 @@ DEALINGS IN THE SOFTWARE.
   #define FLOAT_DIGITS  8
 #endif
 
-#if USE_FLOAT
+#if FEATURE(USE_FLOAT)
 static const double smalltable[] = {
 #ifndef NO_DOUBLE_PRECISION
     1e-256, 1e-128, 1e-64,
@@ -401,10 +405,10 @@ static char *format_float(double number, int ndigits, unsigned char flags, unsig
     // Add the sign prefix.
     p = buf + 1;
     if      (flags & FL_NEG)    *--p = '-';
-#if USE_PLUS_SIGN
+#if FEATURE(USE_PLUS_SIGN)
     else if (flags & FL_PLUS)   *--p = '+';
 #endif
-#if USE_SPACE_SIGN
+#if FEATURE(USE_SPACE_SIGN)
     else if (flags & FL_SPACE)  *--p = ' ';
 #endif
     
@@ -415,17 +419,17 @@ static char *format_float(double number, int ndigits, unsigned char flags, unsig
 
 static printf_t doprnt(void *context, void (*func)(char c, void *context), const char *fmt, va_list ap)
 {
-#if USE_LONG
+#if FEATURE(USE_LONG)
     unsigned long uvalue;
 #else
     unsigned uvalue;
 #endif
     unsigned base;
-#if USE_SPACE_PAD || USE_ZERO_PAD
+#if FEATURE(USE_SPACE_PAD) || FEATURE(USE_ZERO_PAD)
     width_t width;
     width_t fwidth;
 #endif
-#if USE_PRECISION
+#if FEATURE(USE_PRECISION)
     width_t precision;
 #else
     #define precision -1
@@ -437,7 +441,7 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
     printf_t count = 0;
 #endif
     unsigned char flags;
-#if USE_FLOAT
+#if FEATURE(USE_FLOAT)
     unsigned char fflags;
     double fvalue;
 #endif
@@ -449,13 +453,13 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
         if (convert == '%')
         {
             p = buffer + BUFMAX;
-#if USE_PRECISION
+#if FEATURE(USE_PRECISION)
             precision = -1;
 #endif
-#if USE_SPACE_PAD || USE_ZERO_PAD
+#if FEATURE(USE_SPACE_PAD) || FEATURE(USE_ZERO_PAD)
             width = 0;
 #endif
-#if USE_FLOAT
+#if FEATURE(USE_FLOAT)
             fflags = 0;
 #endif
             flags = 0;
@@ -464,35 +468,35 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
             for (;;)
             {
                 convert = GET_FORMAT(++fmt);
-#if USE_ZERO_PAD
+#if FEATURE(USE_ZERO_PAD)
                 if (convert == '0')
                 {
                     flags |= FL_ZERO_PAD;
                 }
                 else
 #endif
-#if USE_PLUS_SIGN
+#if FEATURE(USE_PLUS_SIGN)
                 if (convert == '+')
                 {
                     flags |= FL_PLUS;
                 }
                 else
 #endif
-#if USE_LEFT_JUST
+#if FEATURE(USE_LEFT_JUST)
                 if (convert == '-')
                 {
                     flags |= FL_LEFT_JUST;
                 }
                 else
 #endif
-#if USE_SPACE_SIGN
+#if FEATURE(USE_SPACE_SIGN)
                 if (convert == ' ')
                 {
                     flags |= FL_SPACE;
                 }
                 else
 #endif
-#if USE_SPECIAL
+#if FEATURE(USE_SPECIAL)
                 if (convert == '#')
                 {
                     flags |= FL_SPECIAL;
@@ -501,9 +505,9 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
 #endif
                     break;
             }
-#if USE_SPACE_PAD || USE_ZERO_PAD
+#if FEATURE(USE_SPACE_PAD) || FEATURE(USE_ZERO_PAD)
             // Extract width
-#if USE_INDIRECT
+#if FEATURE(USE_INDIRECT)
             if (convert == '*')
             {
                 width = va_arg(ap, int);
@@ -517,13 +521,13 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                 convert = GET_FORMAT(++fmt);
             }
 #endif
-#if USE_PRECISION
+#if FEATURE(USE_PRECISION)
             // Extract precision
             if (convert == '.')
             {
                 precision = 0;
                 convert = GET_FORMAT(++fmt);
-#if USE_INDIRECT
+#if FEATURE(USE_INDIRECT)
                 if (convert == '*')
                 {
                     precision = va_arg(ap, int);
@@ -538,7 +542,7 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                 }
             }
 #endif
-#if USE_LONG
+#if FEATURE(USE_LONG)
             // Extract length modifier
             if (convert == 'l')
             {
@@ -549,23 +553,23 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
             switch (convert)
             {
             case 'c':
-#if USE_SPACE_PAD
+#if FEATURE(USE_SPACE_PAD)
                 width = 0;
 #endif
                 *--p = (char) va_arg(ap, int);
                 break;
             case 'd':
-#if USE_SIGNED_I
+#if FEATURE(USE_SIGNED_I)
             case 'i':
 #endif
-#if USE_LONG
+#if FEATURE(USE_LONG)
                 if (flags & FL_LONG)
                     uvalue = va_arg(ap, long);
                 else
 #endif
                     uvalue = va_arg(ap, int);
                 base = 10;
-#if USE_LONG
+#if FEATURE(USE_LONG)
                 if ((long) uvalue < 0)
 #else
                 if ((int) uvalue < 0)
@@ -575,9 +579,9 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                     uvalue = -uvalue;
                 }
                 goto number;
-#if USE_UNSIGNED
+#if FEATURE(USE_UNSIGNED)
             case 'u':
-#if USE_LONG
+#if FEATURE(USE_LONG)
                 if (flags & FL_LONG)
                     uvalue = va_arg(ap, unsigned long);
                 else
@@ -586,9 +590,9 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                 base = 10;
                 goto number;
 #endif
-#if USE_OCTAL
+#if FEATURE(USE_OCTAL)
             case 'o':
-#if USE_LONG
+#if FEATURE(USE_LONG)
                 if (flags & FL_LONG)
                     uvalue = va_arg(ap, unsigned long);
                 else
@@ -597,14 +601,14 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                 base = 8;
                 goto number;
 #endif
-#if USE_HEX_LOWER
+#if FEATURE(USE_HEX_LOWER)
             case 'x':
 #endif
-#if USE_HEX_UPPER
+#if FEATURE(USE_HEX_UPPER)
             case 'X':
 #endif
-#if USE_HEX_LOWER || USE_HEX_UPPER
-#if USE_LONG
+#if FEATURE(USE_HEX_LOWER) || FEATURE(USE_HEX_UPPER)
+#if FEATURE(USE_LONG)
                 if (flags & FL_LONG)
                     uvalue = va_arg(ap, unsigned long);
                 else
@@ -613,29 +617,29 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                 base = 16;
 #endif
             number:
-#if USE_PRECISION
+#if FEATURE(USE_PRECISION)
                 // Set default precision
                 if (precision == -1) precision = 1;
 #endif
                 // Make sure options are valid.
                 if (base != 10) flags &= ~(FL_PLUS|FL_NEG|FL_SPACE);
-#if USE_SPECIAL
+#if FEATURE(USE_SPECIAL)
                 else            flags &= ~FL_SPECIAL;
 #endif
                 // Generate the number without any prefix yet.
-#if USE_ZERO_PAD
+#if FEATURE(USE_ZERO_PAD)
                 fwidth = width;
                 // Avoid formatting buffer overflow.
                 if (fwidth > BUFMAX) fwidth = BUFMAX;
 #endif
-#if USE_PRECISION
+#if FEATURE(USE_PRECISION)
                 while (uvalue || precision > 0)
 #else
                 if (uvalue == 0)
                 {
                     // Avoid printing 0 as ' '
                     *--p = '0';
-#if USE_ZERO_PAD
+#if FEATURE(USE_ZERO_PAD)
                     --fwidth;
 #endif
                 }
@@ -643,14 +647,14 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
 #endif
                 {
                     c = (char) ((uvalue % base) + '0');
-#if USE_HEX_LOWER || USE_HEX_UPPER
+#if FEATURE(USE_HEX_LOWER) || FEATURE(USE_HEX_UPPER)
                     if (c > '9')
                     {
                         // Hex digits
-#if USE_HEX_LOWER && USE_HEX_UPPER
+#if FEATURE(USE_HEX_LOWER) && FEATURE(USE_HEX_UPPER)
                         if (convert == 'X') c += 'A' - '0' - 10;
                         else                c += 'a' - '0' - 10;
-#elif USE_HEX_UPPER || USE_HEX_UPPER_L
+#elif FEATURE(USE_HEX_UPPER) || FEATURE(USE_HEX_UPPER_L)
                         c += 'A' - '0' - 10;
 #else
                         c += 'a' - '0' - 10;
@@ -659,17 +663,17 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
 #endif
                     *--p = c;
                     uvalue /= base;
-#if USE_ZERO_PAD
+#if FEATURE(USE_ZERO_PAD)
                     --fwidth;
 #endif
-#if USE_PRECISION
+#if FEATURE(USE_PRECISION)
                     --precision;
 #endif
                 }
-#if USE_ZERO_PAD
+#if FEATURE(USE_ZERO_PAD)
                 // Allocate space for the sign bit.
                 if (flags & (FL_PLUS|FL_NEG|FL_SPACE)) --fwidth;
-#if USE_SPECIAL
+#if FEATURE(USE_SPECIAL)
                 // Allocate space for special chars if required.
                 if (flags & FL_SPECIAL)
                 {
@@ -687,7 +691,7 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                     }
                 }
 #endif
-#if USE_SPECIAL
+#if FEATURE(USE_SPECIAL)
                 // Add special prefix if required.
                 if (flags & FL_SPECIAL)
                 {
@@ -697,18 +701,18 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
 #endif
                 // Add the sign prefix
                 if      (flags & FL_NEG)    *--p = '-';
-#if USE_PLUS_SIGN
+#if FEATURE(USE_PLUS_SIGN)
                 else if (flags & FL_PLUS)   *--p = '+';
 #endif
-#if USE_SPACE_SIGN
+#if FEATURE(USE_SPACE_SIGN)
                 else if (flags & FL_SPACE)  *--p = ' ';
 #endif
-#if USE_PRECISION
+#if FEATURE(USE_PRECISION)
                 // Precision is not used to limit number output.
                 precision = -1;
 #endif
                 break;
-#if USE_FLOAT
+#if FEATURE(USE_FLOAT)
             case 'f':
                 // Set default precision
                 if (precision == -1) precision = 6;
@@ -748,7 +752,7 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                 break;
             }
 
-#if USE_SPACE_PAD
+#if FEATURE(USE_SPACE_PAD)
             // Check width of formatted text.
             fwidth = strlen(p);
             // Copy formatted text with leading or trailing space.
@@ -758,7 +762,7 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                 if (((flags & FL_LEFT_JUST) || width <= fwidth) && *p && precision != 0) c = *p++;
                 else c = ' ';
 #else
-  #if USE_PRECISION
+  #if FEATURE(USE_PRECISION)
             // A positive value for precision will limit the length of p used.
             while (*p && precision != 0)
   #else
@@ -771,10 +775,10 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
 #ifdef PRINTF_T
                 ++count;
 #endif
-#if USE_SPACE_PAD
+#if FEATURE(USE_SPACE_PAD)
                 --width;
 #endif
-#if USE_PRECISION
+#if FEATURE(USE_PRECISION)
                 if (precision > 0) --precision;
 #endif
             }
