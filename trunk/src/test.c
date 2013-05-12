@@ -84,39 +84,39 @@ int main(int argc, char *argv[])
     tsprintf(buf, "Size %d\n", 123);
     tprintf("Size %d\n", 123);
 #else
-#if USE_FLOAT
+#if FEATURE(USE_FLOAT)
     double one = 1.0;
 #endif
     tsprintf(buf, "Hello world %d %% %z\n", 123);
-#if USE_SPACE_PAD || USE_ZERO_PAD
+#if FEATURE(USE_SPACE_PAD) || FEATURE(USE_ZERO_PAD)
     tprintf("Int %d %4d %04d %+04d % 4d %-4d. %+3d %+3d % 3d % 3d\n", N, N, N, N, N, N, 0, -1, 0, -1);
-  #if USE_HEX_UPPER || USE_HEX_LOWER
+  #if FEATURE(USE_HEX_UPPER) || FEATURE(USE_HEX_LOWER)
     tprintf("Hex %x %4x %018X %+x % x %-4x. %+#x\n", X, X, X, X, X, X, X);
   #endif
-  #if USE_OCTAL
+  #if FEATURE(USE_OCTAL)
     tprintf("Oct %o %4o %04o %+o % o %-4o. %+#o\n", O, O, O, O, O, O, O);
   #endif
     tprintf("Str [%s] [%8s] [%-8s]\n", S, S, S);
-  #if USE_INDIRECT
+  #if FEATURE(USE_INDIRECT)
     tprintf("Ind %*d %*s.\n", 4, N, 8, S);
   #endif
-  #if USE_PRECISION
+  #if FEATURE(USE_PRECISION)
     tprintf("Prec %.d %.2d %.2d %.2d %-5.3s %.3s.\n", 0, 1, 0, -1, S, S);
   #endif
 #else
     tprintf("Int %d %+d %+d % d % d\n", N, 0, -1, 0, -1);
-  #if USE_HEX_UPPER || USE_HEX_LOWER
+  #if FEATURE(USE_HEX_UPPER) || FEATURE(USE_HEX_LOWER)
     tprintf("Hex %x %+x % x\n", X, X, X);
   #endif
-  #if USE_OCTAL
+  #if FEATURE(USE_OCTAL)
     tprintf("Oct %o %+o % o\n", O, O, O);
   #endif
     tprintf("Str [%s]\n", S);
-  #if USE_PRECISION
+  #if FEATURE(USE_PRECISION)
     tprintf("Prec %.d %.2d %.2d %.2d %.3s.\n", 0, 1, 0, -1, S);
   #endif
 #endif
-#if USE_FLOAT
+#if FEATURE(USE_FLOAT)
     tprintf("pi = %f %e %g\n", PI, PI, PI);
     tprintf("f6dig = %.0f %e %g\n", F6, F6, F6);
     tprintf("flarge = %f %e %g\n", FL, FL, FL);
