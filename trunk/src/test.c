@@ -56,7 +56,11 @@ DEALINGS IN THE SOFTWARE.
        with strings in flash.
     */
     #define tprintf(format, args...)        printf_rom(PSTR(format), ## args)
+  #ifdef BASIC_PRINTF_ONLY
+    #define tsprintf(buf, format, args...)  printf_rom(PSTR(format), ## args)
+  #else
     #define tsprintf(buf, format, args...)  sprintf_rom(buf, PSTR(format), ## args)
+  #endif
 #else
     /* In the PC test environment reinstate printf to call the normal library function.
        Define a new macro which calls both the library and our own versions of printf.
@@ -64,7 +68,11 @@ DEALINGS IN THE SOFTWARE.
     #undef printf
     #undef sprintf
     #define tprintf(format, args...)        do { printf(format, ## args); printf_rom(format, ## args); } while(0)
-    #define tsprintf(buf, format, args...)  do { printf(format, ## args); sprintf_rom(buf, format, ##args); printf("%s", buf); } while(0)
+  #ifdef BASIC_PRINTF_ONLY
+    #define tsprintf(buf, format, args...)  do { printf(format, ## args); printf_rom(format, ## args); } while(0)
+  #else
+    #define tsprintf(buf, format, args...)  do { printf(format, ## args); sprintf_rom(buf, format, ## args); printf("%s", buf); } while(0)
+  #endif
 #endif
 
 
@@ -79,7 +87,9 @@ DEALINGS IN THE SOFTWARE.
 
 int main(int argc, char *argv[])
 {
+#ifndef BASIC_PRINTF_ONLY
     char buf[32];
+#endif
 #ifdef SIZE
     tsprintf(buf, "Size %d\n", 123);
     tprintf("Size %d\n", 123);

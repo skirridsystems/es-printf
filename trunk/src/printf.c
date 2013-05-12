@@ -417,7 +417,11 @@ static char *format_float(double number, int ndigits, unsigned char flags, unsig
 }
 #endif
 
+#ifdef BASIC_PRINTF_ONLY
+static printf_t doprnt(void (*func)(char c), const char *fmt, va_list ap)
+#else
 static printf_t doprnt(void *context, void (*func)(char c, void *context), const char *fmt, va_list ap)
+#endif
 {
 #if FEATURE(USE_LONG)
     unsigned long uvalue;
@@ -771,7 +775,11 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
             {
                 c = *p++;
 #endif
+#ifdef BASIC_PRINTF_ONLY
+                func(c);            // Basic output function.
+#else
                 func(c, context);   // Output function.
+#endif
 #ifdef PRINTF_T
                 ++count;
 #endif
@@ -785,7 +793,11 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
         }
         else
         {
-            func(convert, context);   // Output function.
+#ifdef BASIC_PRINTF_ONLY
+            func(convert);              // Basic output function.
+#else
+            func(convert, context);     // Output function.
+#endif
 #ifdef PRINTF_T
             ++count;
 #endif
@@ -801,7 +813,11 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
 // Output function for printf.
 // The context is not used at present, but could be extended to include
 // streams or to avoid output mixing in multi-threaded use.
+#ifdef BASIC_PRINTF_ONLY
+static void putout(char c)
+#else
 static void putout(char c, void *context)
+#endif
 {
     PUTCHAR_FUNC(c);
 }
@@ -816,9 +832,17 @@ printf_t printf(const char *fmt, ...)
 
     va_start(ap, fmt);
 #ifdef PRINTF_T
+  #ifdef BASIC_PRINTF_ONLY
+    Count = doprnt(putout, fmt, ap);
+  #else
     Count = doprnt((void *)0, putout, fmt, ap);
+  #endif
 #else
+  #ifdef BASIC_PRINTF_ONLY
+    doprnt(putout, fmt, ap);
+  #else
     doprnt((void *)0, putout, fmt, ap);
+  #endif
 #endif
     va_end(ap);
     
@@ -827,6 +851,7 @@ printf_t printf(const char *fmt, ...)
 #endif
 }
 
+#ifndef BASIC_PRINTF_ONLY
 // Output function for sprintf.
 // Here the context is a pointer to a pointer to the buffer.
 // Double indirection allows the function to increment the buffer pointer.
@@ -859,3 +884,4 @@ printf_t sprintf(char *buf, const char *fmt, ... )
     return Count;
 #endif
 }
+#endif
