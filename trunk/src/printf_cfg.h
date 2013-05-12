@@ -174,6 +174,26 @@ This section provides some commonly used combinations of features.
 #define FULL_FLOAT ( \
         USE_FLOAT | FULL_INT )
 
+// Custom feature set. Comment out features you don't want.
+#define CUSTOM_SET ( \
+        USE_FLOAT       \
+        USE_LONG        \
+        USE_OCTAL       \
+        USE_SIGNED_I    \
+        USE_UNSIGNED    \
+        USE_HEX_LOWER   \
+        USE_HEX_UPPER   \
+        USE_HEX_UPPER_L \
+        USE_PRECISION   \
+        USE_ZERO_PAD    \
+        USE_SPACE_PAD   \
+        USE_INDIRECT    \
+        USE_PLUS_SIGN   \
+        USE_SPACE_SIGN  \
+        USE_LEFT_JUST   \
+        USE_SPECIAL     \
+)
+
 // Current feature set. Use a pre-defined set or define your own.
 #define FEATURE_FLAGS   SHORT_INT
 
