@@ -39,24 +39,6 @@ defining BASIC_PRINTF_ONLY which allows the internal API to be simplified.
 //#define BASIC_PRINTF_ONLY
 
 /*************************************************************************
-Memory access definitions
-
-Some micros such as the AVR can only support storing strings in flash
-memory by wrapping the string in a macro. To make this transparent we can
-define the printf function itself as a macro which performs the wrap and
-calls a renamed version of printf with a _rom suffix.
-*************************************************************************/
-
-/* Example for AVR micros using WinAVR (GCC) compiler
-
-#define sprintf(buf, format, args...)   sprintf_rom(buf, PSTR(format), ## args)
-#define printf(format, args...)         printf_rom(PSTR(format), ## args)
-
-extern int sprintf_rom(char *, const char *, ...);
-extern int printf_rom(const char *, ...);
-*/
-
-/*************************************************************************
 Number of chars output
 
 Traditionally printf returns the number of chars output. If you are not
@@ -74,7 +56,31 @@ typedef void printf_t;
 typedef PRINTF_T printf_t;
 #endif
 
-/* The standard declarations of printf and sprintf. */
+/*************************************************************************
+Memory access definitions
+
+Some micros such as the AVR can only support storing strings in flash
+memory by wrapping the string in a macro. To make this transparent we can
+define the printf function itself as a macro which performs the wrap and
+calls a renamed version of printf with a _rom suffix.
+*************************************************************************/
+
+/* Example for AVR micros using WinAVR (GCC) compiler
+
+#define sprintf(buf, format, args...)   sprintf_rom(buf, PSTR(format), ## args)
+#define printf(format, args...)         printf_rom(PSTR(format), ## args)
+
+extern printf_t sprintf_rom(char *, const char *, ...);
+extern printf_t printf_rom(const char *, ...);
+*/
+
+/*************************************************************************
+Standard declarations
+
+These are the declarations for the standard functions, unless overridden
+by the memory access macros above.
+*************************************************************************/
+
 #ifndef printf
 extern printf_t printf(const char *, ...);
 #endif
