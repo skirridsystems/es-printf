@@ -4,6 +4,9 @@ es-printf  -  configurable printf for embedded systems
 Test program to compare output with the standard library function
 and to generate AVR code for embedded testing.
 
+$Revision$
+$Date$
+
 **************************************************************************
 Copyright (c) 2006 - 2013 Skirrid Systems
 
