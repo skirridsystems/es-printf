@@ -29,16 +29,6 @@ DEALINGS IN THE SOFTWARE.
 #define PRINTF_H
 
 /*************************************************************************
-Basic printf only
-
-The code is designed to support a variety of printf-related functions.
-If simple serial output is all you want then you can save some space by
-defining BASIC_PRINTF_ONLY which allows the internal API to be simplified.
-*************************************************************************/
-
-//#define BASIC_PRINTF_ONLY
-
-/*************************************************************************
 Number of chars output
 
 Traditionally printf returns the number of chars output. If you are not
