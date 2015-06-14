@@ -3,8 +3,7 @@ es-printf  -  configurable printf for embedded systems
 
 printf.h: Header for consumers of printf functions.
 
-$Revision$
-$Date$
+$Id$
 
 **************************************************************************
 Copyright (c) 2006 - 2013 Skirrid Systems
