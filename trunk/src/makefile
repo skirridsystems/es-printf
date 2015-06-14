@@ -3,6 +3,9 @@
 #
 # Makefile for testing on a PC and AVR
 #
+# $Revision$
+# $Date$
+#
 #*************************************************************************
 # Copyright (c) 2006 - 2013 Skirrid Systems
 #

@@ -3,6 +3,9 @@ es-printf  -  configurable printf for embedded systems
 
 printf.c: Main source file for printf family of functions.
 
+$Revision$
+$Date$
+
 **************************************************************************
 Copyright (c) 2006 - 2013 Skirrid Systems
 
