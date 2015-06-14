@@ -29,6 +29,17 @@ DEALINGS IN THE SOFTWARE.
 #define PRINTF_CFG_H
 
 /*************************************************************************
+Basic printf only
+
+The code is designed to support a variety of printf-related functions.
+If simple serial output is all you want then you can save some space by
+defining BASIC_PRINTF_ONLY which allows the internal API to be simplified.
+Note that sprintf will not be supported in this case.
+*************************************************************************/
+
+//#define BASIC_PRINTF_ONLY
+
+/*************************************************************************
 Memory access definitions
 
 Some micros such as the AVR can only support storing and accessing strings
