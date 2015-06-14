@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>es-printf :: Documentation</title>
+    <style type="text/css">
+    body { background: #003366; color:#404040; font:76% Verdana,Tahoma,Arial,sans-serif; margin:0 auto; padding:0;}
+    #wrap {background:#fff; color:#404040; margin:0 auto; margin-top:10px; margin-bottom:10px; padding:10px; width:850px;}
+    #content {line-height:1.3em; margin:20px 50px 5px; padding:0 10px;}
+
+    /* Basic tags */
+    a {background-color:inherit; color:#286ea0; font-weight:700; text-decoration:none;}
+    a:hover {background-color:inherit; color:#286ea0; text-decoration:underline;}
+    p {margin:0 0 0.8em;}
+    h1 {font-size:3em; line-height:100%; margin:20px 0; padding-top:10px;}
+    h2 {font-size:1.6em; margin:15px 0 15px;}
+    h3 {font-size:1.1em; margin:15px 0 4px; padding:4px; background-color:#f4f4f4; border:1px solid black;}
+    h4 {font-size:1.1em; margin:10px 0 4px;}
+    ul {margin:0; padding:0;list-style-type:none;}
+    li {margin:0; padding:0;}
+    table {margin-bottom:20px; border-collapse:collapse;}
+    td, th {vertical-align:top; padding-right:25px; border: 1px solid #000000; padding: 3px 7px 2px 7px;}
+    th {background-color: #286ea0; color: #ffffff;}
+    tr.alt td {background-color: #A9C5D9; }
+
+    /* Additional classes */
+    .left {float:left; margin:3px 10px 2px 0;}
+    .right {float:right; margin:15px 0 0 10px;}
+    .textright {text-align:right; margin:5px 0;}
+    .center {text-align:center;}
+    .small {font-size:0.8em;}
+    .bold {font-weight:700;}
+    .endsect {margin:0;}
+    </style>
+</head>
+<body>
+<div id="wrap"><div id="content">
+
+<h1>es-printf documentation</h1>
+
+<h2 id="top">Contents</h2>
+<ul>
+    <li><a href="#whatis">What is es-printf?</a></li>
+    <li><a href="#format">Supported formatting commands</a></li>
+    <li><a href="#config">Configuration</a></li>
+    <li><a href="#integrate">Integration</a></li>
+    <li><a href="#compiler">Compiler specifics</a></li>
+    <li><a href="#license">License</a></li>
+</ul>
+
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+
+<p class="right"><a href="#top">Top</a></p>
+<h2 id="whatis">What is es-printf?</h2>
+<p>
+    es-printf is an implementation of the standard C printf function targetted
+    at small embedded systems. It provides several advantages over the
+    standard function:
+</p>
+<ol>
+<li>
+    There are many fine-grained customisations which allow you to trim
+    the size to absolute minimum so it will fit in limited code space.
+    You can elect to have only hexadecimal output, full floating point support
+    and any number of options in between.
+</li>
+<li>
+    It does not use any static buffers so it is thread-safe and can
+    safely be used within interrupts and in an RTOS environment.
+</li>
+<li>
+    You provide your own output function which can be to a serial port
+    or to anything else convenient.
+</li>
+<li>
+    Because the source code is available it is easy to extend
+    the formatter to provide custom specifiers for your particular needs.
+</li>
+</ol>
+<p class="endsect">&nbsp;</p>
+
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+
+<p class="right"><a href="#top">Top</a></p>
+<h2 id="format">Supported formatting commands</h2>
+<p>
+    The format argument is a C string that contains the text to be written to output.
+    It can optionally contain embedded format specifiers that are replaced by the values
+    specified in subsequent additional arguments and formatted as requested.
+</p>
+<p>
+    A format specifier follows this prototype:<br />
+    %[flags][width][.precision][length]specifier 
+</p>
+<table>
+    <tr><th>Specifier</th><th>Output</th><th>Example</th></tr>
+    <tr><td>d or i</td><td>Signed decimal integer</td><td>789</td></tr>
+    <tr><td>u</td><td>Unsigned decimal integer</td><td>789</td></tr>
+    <tr><td>o</td><td>Unsigned octal integer</td><td>610</td></tr>
+    <tr><td>x</td><td>Unsigned hexadecimal integer</td><td>3ff</td></tr>
+    <tr><td>X</td><td>Unsigned hexadecimal integer (uppercase)</td><td>3FF</td></tr>
+    <tr><td>f</td><td>Decimal floating point</td><td>789.12</td></tr>
+    <tr><td>e</td><td>Scientific notation (mantissa/exponent)</td><td>7.8912e+2</td></tr>
+    <tr><td>E</td><td>Scientific notation (uppercase)</td><td>7.8912E+2</td></tr>
+    <tr><td>g</td><td>Use shortest representation: %f or %e</td><td>789.12</td></tr>
+    <tr><td>G</td><td>Use shortest representation: %f or %E</td><td>789.12</td></tr>
+    <tr><td>c</td><td>Character</td><td>k</td></tr>
+    <tr><td>s</td><td>String of characters</td><td>example</td></tr>
+    <tr><td>%</td><td>A double % character will write single % to output</td><td>%</td></tr>
+</table>
+
+<p>
+    The format specifier can also contain sub-specifiers: flags, width, .precision and modifiers
+    (in that order), which are optional.
+</p>
+<table>
+    <tr><th>Flags</th><th>Description</th></tr>
+    <tr><td>-</td><td>Left-justify within the given field width (right is the default)</td></tr>
+    <tr><td>+</td><td>Always output a preceeding plus or minus sign (+ or -) even for positive numbers.
+            By default, only negative numbers are preceded with a - sign.</td></tr>
+    <tr><td>(space)</td><td>If no minus sign is needed, output a space before the value.</td></tr>
+    <tr><td>#</td><td>Used with o, x or X specifiers the value is preceeded with 0, 0x or 0X
+            respectively.<br />
+            Used with e, E, f, g or G it forces the output to contain a decimal point even if
+            no more digits follow. By default, if no digits follow, no decimal point is written.</td></tr>
+    <tr><td>0</td><td>Left-pads the number with zeroes (0) instead of spaces when padding is specified.</td></tr>
+</table>
+
+<table>
+    <tr><th>Width</th><th>Description</th></tr>
+    <tr><td>(number)</td><td>Minimum number of characters to be output. If the value to be
+            printed is shorter than this number, the result is padded with blank spaces.
+            The value is not truncated even if the result is larger.</td></tr>
+    <tr><td>*</td><td>The width is not specified in the format string, but as an additional
+            integer value argument preceding the argument that has to be formatted.</td></tr>
+</table>
+
+<table>
+    <tr><th>.Precision</th><th>Description</th></tr>
+    <tr><td>.number</td><td>For integer specifiers (d, i, o, u, x, X): precision specifies the
+            minimum number of digits to be written. If the value to be written is shorter than
+            this number, the result is padded with leading zeros. The value is not truncated
+            even if the result is longer. A precision of 0 means that no character is written
+            for the value 0.<br />
+            For e, E and f specifiers: this is the number of digits to be printed after the
+            decimal point (by default, this is 6).<br />
+            For g and G specifiers: This is the maximum number of significant digits to be printed.<br />
+            For s: this is the maximum number of characters to be printed. By default all
+            characters are printed until the ending null character is encountered.<br />
+            If the period is specified without an explicit value for precision, 0 is assumed.</td></tr>
+    <tr><td>.*</td><td>The precision is not specified in the format string, but as an additional
+            integer value argument preceding the argument that has to be formatted.</td></tr>
+</table>
+
+<p>
+    The length sub-specifier modifies the length of the data type. This chart shows the types
+    used to interpret the corresponding arguments with and without length specifier
+</p>
+<table>
+    <tr><th></th><th colspan="5">Specifiers</th></tr>
+    <tr><th>Length</th><th>d i</th><th>u o x X</th><th>f e E g G</th><th>c</th><th>s</th></tr>
+    <tr><td>(none)</td><td>int</td><td>unsigned int</td><td>double</td><td>int</td><td>char*</td></tr>
+    <tr><td>l</td><td>long int</td><td>unsigned long int</td><td></td><td></td><td></td></tr>
+</table>
+<p class="endsect">&nbsp;</p>
+
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+
+<p class="right"><a href="#top">Top</a></p>
+<h2 id="config">Configuration</h2>
+
+<p class="endsect">&nbsp;</p>
+
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+
+<p class="right"><a href="#top">Top</a></p>
+<h2 id="integrate">Integration</h2>
+
+<p class="endsect">&nbsp;</p>
+
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+
+<p class="right"><a href="#top">Top</a></p>
+<h2 id="compiler">Compiler specifics</h2>
+
+<p class="endsect">&nbsp;</p>
+
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+
+<p class="right"><a href="#top">Top</a></p>
+<h2 id="license">License</h2>
+
+<p class="endsect">&nbsp;</p>
+
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+
+<p>Copyright 2006-2015 Skirrid Systems</p>
+</div></div>
+</body>
+</html>
