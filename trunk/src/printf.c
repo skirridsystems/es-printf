@@ -574,9 +574,11 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
 #endif
 #if FEATURE(USE_SIGNED)
             case 'd':
-  #if FEATURE(USE_SIGNED_I)
+#endif
+#if FEATURE(USE_SIGNED_I)
             case 'i':
-  #endif
+#endif
+#if FEATURE(USE_SIGNED) || FEATURE(USE_SIGNED_I)
   #if FEATURE(USE_LONG)
                 if (flags & FL_LONG)
                     uvalue = va_arg(ap, long);
