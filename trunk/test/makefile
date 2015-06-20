@@ -32,8 +32,9 @@ MCU = atmega8
 TRG = Test
 STRG = Size
 STRGN = SizeN
-SRC = test.c
-INC = printf.c printf.h printf_cfg.h
+TEST_SRC = test.c
+PRINTF_SRC = printf.c printf.h printf_cfg.h
+PRINTF_DIR = ../src
 
 # Tool chain used for this project.
 AVRGCC = /winavr-20100110
@@ -65,19 +66,22 @@ CPFLAGS = $(CPMISC) $(CPCODE) $(CPWARN) -DTEST_AVR
 # Linker flags
 LDFLAGS = -mmcu=$(MCU) -Wl,-Map=$(basename $@).map,--cref -Wl,--relax -Wl,--gc-sections
 
+# Derive es-printf files to include
+PRINTF_INC = $(addprefix $(PRINTF_DIR)/,$(PRINTF_SRC))
+
 # Derive all project specific object files
-OBJ = $(addprefix $(OUT)/,$(SRC:.c=.o))
-SOBJ = $(addprefix $(SOUT)/,$(SRC:.c=.o))
-SOBJN = $(addprefix $(SOUTN)/,$(SRC:.c=.o))
+OBJ = $(addprefix $(OUT)/,$(TEST_SRC:.c=.o))
+SOBJ = $(addprefix $(SOUT)/,$(TEST_SRC:.c=.o))
+SOBJN = $(addprefix $(SOUTN)/,$(TEST_SRC:.c=.o))
 
 #-----------------------------------------------------------------
 
 # Implicit rules for creating object from source.
-$(OUT)/%.o : %.c makefile $(INC)
+$(OUT)/%.o : %.c makefile $(PRINTF_INC)
 	$(CC) -c $(CPFLAGS) -I. $*.c -o $@
-$(SOUT)/%.o : %.c makefile $(INC)
+$(SOUT)/%.o : %.c makefile $(PRINTF_INC)
 	$(CC) -c $(CPFLAGS) -DSIZE -I. $*.c -o $@
-$(SOUTN)/%.o : %.c makefile $(INC)
+$(SOUTN)/%.o : %.c makefile $(PRINTF_INC)
 	$(CC) -c $(CPFLAGS) -DSIZE -DSIZEN -I. $*.c -o $@
 
 #-----------------------------------------------------------------
@@ -91,11 +95,11 @@ $(SOBJ): | $(SOUT)
 $(SOBJN): | $(SOUTN)
 
 $(OUT):
-	mkdir -p $(OUT)
+	mkdir -p $@
 $(SOUT):
-	mkdir -p $(SOUT)
+	mkdir -p $@
 $(SOUTN):
-	mkdir -p $(SOUTN)
+	mkdir -p $@
 
 $(TRG).hex: $(OUT)/$(TRG).elf
 	$(HEX) -O ihex $^ $@
@@ -117,10 +121,10 @@ $(SOUTN)/$(STRGN).elf: $(SOBJN)
 	$(AVRSIZE) $@
 
 # Generate PC executable
-$(TRG).exe: $(SRC) $(INC) makefile
-	$(PC_GCC) -o $@ $(SRC)
+$(TRG).exe: $(TEST_SRC) $(PRINTF_INC) makefile
+	$(PC_GCC) -o $@ $(TEST_SRC)
 
 #---------------------- MAKE CLEAN -------------------------------
 #make instruction to delete created files
 clean:
-	$(RM) \*.hex \*.exe $(OUT) $(SOUT)
+	$(RM) \*.hex \*.exe AVR_\*
