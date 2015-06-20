@@ -39,7 +39,7 @@ On a small micro you can define the return type as unsigned char if you
 are sure the total output width will never exceed 255, or unsigned short.
 *************************************************************************/
 
-//#define PRINTF_T unsigned short
+#define PRINTF_T unsigned short
 
 // Create a type definition for the return value
 #ifndef PRINTF_T
