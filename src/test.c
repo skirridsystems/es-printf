@@ -89,13 +89,14 @@ DEALINGS IN THE SOFTWARE.
 
 int main(int argc, char *argv[])
 {
+#ifdef SIZE
+    #ifndef SIZEN
+    tprintf("");
+    #endif
+#else
 #ifndef BASIC_PRINTF_ONLY
     char buf[32];
 #endif
-#ifdef SIZE
-    tsprintf(buf, "Size %d\n", 123);
-    tprintf("Size %d\n", 123);
-#else
 #if FEATURE(USE_FLOAT)
     double one = 1.0;
 #endif

@@ -31,6 +31,7 @@
 MCU = atmega8
 TRG = Test
 STRG = Size
+STRGN = SizeN
 SRC = test.c
 INC = printf.c printf.h printf_cfg.h
 
@@ -45,6 +46,7 @@ PC_GCC = gcc
 # Tools and directories
 OUT     = AVR_out
 SOUT    = AVR_size
+SOUTN   = AVR_sizeN
 CC      = $(AVRGCC)/bin/avr-gcc
 RM      = $(AVRGCC)/utils/bin/rm -rf
 HEX     = $(AVRGCC)/bin/avr-objcopy
@@ -66,6 +68,7 @@ LDFLAGS = -mmcu=$(MCU) -Wl,-Map=$(basename $@).map,--cref -Wl,--relax -Wl,--gc-s
 # Derive all project specific object files
 OBJ = $(addprefix $(OUT)/,$(SRC:.c=.o))
 SOBJ = $(addprefix $(SOUT)/,$(SRC:.c=.o))
+SOBJN = $(addprefix $(SOUTN)/,$(SRC:.c=.o))
 
 #-----------------------------------------------------------------
 
@@ -74,20 +77,25 @@ $(OUT)/%.o : %.c makefile $(INC)
 	$(CC) -c $(CPFLAGS) -I. $*.c -o $@
 $(SOUT)/%.o : %.c makefile $(INC)
 	$(CC) -c $(CPFLAGS) -DSIZE -I. $*.c -o $@
+$(SOUTN)/%.o : %.c makefile $(INC)
+	$(CC) -c $(CPFLAGS) -DSIZE -DSIZEN -I. $*.c -o $@
 
 #-----------------------------------------------------------------
 # This section defines the aims of the make process
 
-all: $(TRG).hex $(STRG).hex $(TRG).exe
+all: $(TRG).exe $(TRG).hex $(SOUT)/$(STRG).elf $(SOUTN)/$(STRGN).elf
 
 # Make sure the output directory exists
 $(OBJ): | $(OUT)
 $(SOBJ): | $(SOUT)
+$(SOBJN): | $(SOUTN)
 
 $(OUT):
 	mkdir -p $(OUT)
 $(SOUT):
 	mkdir -p $(SOUT)
+$(SOUTN):
+	mkdir -p $(SOUTN)
 
 $(TRG).hex: $(OUT)/$(TRG).elf
 	$(HEX) -O ihex $^ $@
@@ -98,9 +106,14 @@ $(STRG).hex: $(SOUT)/$(STRG).elf
 # Link main app object files into an ELF output file.
 $(OUT)/$(TRG).elf: $(OBJ)
 	$(CC) $(OBJ) $(LIB) $(LDFLAGS) -o $@
+	$(AVRSIZE) $@
 
 $(SOUT)/$(STRG).elf: $(SOBJ)
 	$(CC) $(SOBJ) $(LIB) $(LDFLAGS) -o $@
+
+$(SOUTN)/$(STRGN).elf: $(SOBJN)
+	$(CC) $(SOBJN) $(LIB) $(LDFLAGS) -o $@
+	$(AVRSIZE) $(SOUT)/$(STRG).elf
 	$(AVRSIZE) $@
 
 # Generate PC executable
