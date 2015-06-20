@@ -46,7 +46,8 @@
     <li><a href="#config">Configuration</a></li>
     <li><a href="#integrate">Integration</a></li>
     <li><a href="#test">Test code</a></li>
-    <li><a href="#license">License</a></li>
+    <li><a href="#size">AVR code size</a></li>
+    <li><a href="#licence">Licence</a></li>
 </ul>
 
 <!-- ************************************************************************************ -->
@@ -76,8 +77,8 @@
     or to anything else convenient.
 </li>
 <li>
-    Because the source code is available it is easy to extend
-    the formatter to provide custom specifiers for your particular needs.
+    Because the source code is available it is easy to extend the
+    formatter to provide custom specifiers for your particular needs.
 </li>
 </ol>
 <p class="endsect">&nbsp;</p>
@@ -143,7 +144,7 @@
     The format specifier can also contain sub-specifiers: flags, width, .precision and modifiers
     (in that order), which are optional.
 </p>
-<table>
+<table id="flags">
     <tr><th>Flags</th><th>Description</th></tr>
     <tr><td>-</td><td>Left-justify within the given field width (right is the default)</td></tr>
     <tr><td>+</td><td>Always output a preceeding plus or minus sign (+ or -) even for positive numbers.
@@ -165,7 +166,7 @@
             integer value argument preceding the argument that has to be formatted.</td></tr>
 </table>
 
-<table>
+<table id="precision">
     <tr><th>.Precision</th><th>Description</th></tr>
     <tr><td>.number</td><td>For integer specifiers (d, i, o, u, x, X): precision specifies the
             minimum number of digits to be written. If the value to be written is shorter than
@@ -247,6 +248,69 @@
     which does not actually exist.
 </p>
 
+<h4>typedef width_t</h4>
+<p>
+    Since it is extremely unlikely that you will ever want to use a formatted
+    width for a single item of more than 127 chars (i.e. the expanded and
+    padded size of a single % expression), the width variables can normally
+    be restricted to 8 bits. On small micros this saves a lot of code and
+    variable space. On a 32-bit RISC it may increase code size due to type
+    conversions. Choose the variable type to suit your CPU.
+    Note that a signed type is required.
+</p>
+
+<h4>Feature configuration</h4>
+<p>
+    You can enable and disable features at a fine-grained level, allowing
+    you to provide only the features you need and control the code size.
+    Define as non-zero to enable, zero to disable.
+</p>
+<table>
+    <tr><th>Define</th><th>Description</th></tr>
+    <tr><td>USE_FLOAT</td><td>Include floating point support.
+            Most of the time you will not need this and it adds considerable weight
+            to the code as well as pulling in the floating point libraries.</td></tr>
+    <tr><td>USE_LONG</td><td>Include support for long integers. Often not needed for
+            embedded applications. If you are happy using hex output you can also
+            print longs by splitting into two shorts.</td></tr>
+    <tr><td>USE_OCTAL</td><td>Traditionally printf supports octal output but you very
+            rarely see it used, so why waste the code space?</td></tr>
+    <tr><td>USE_SIGNED_I</td><td>Supports %i as a synonym for %d. Omitting this doesn't
+            save a lot, but every little helps.</td></tr>
+    <tr><td>USE_UNSIGNED</td><td>Supports %u for unsigned decimal output. In many cases
+            %d is good enough on its own.</td></tr>
+    <tr><td>USE_HEX_LOWER</td><td>Supports %x (lowercase hex output).</td></tr>
+    <tr><td>USE_HEX_UPPER</td><td>Supports %X (uppercase hex output).</td></tr>
+    <tr><td>USE_HEX_UPPER_L</td><td>In conjunction with %x, if you decide you want all output to
+            be uppercase instead you can include this option instead of changing all the format strings.</td></tr>
+    <tr><td>USE_PRECISION</td><td>Include <a href="#precision">precision</a> support when floating point is not present.
+            Precision is automatically enabled when floating point support is used.
+            For integer work it is not very useful, though strings sometime use it.</td></tr>
+    <tr><td>USE_ZERO_PAD</td><td>Allow use of the field widths with leading zero padding e.g. %03d.</td></tr>
+    <tr><td>USE_SPACE_PAD</td><td>Allow use of fields widths with space padding, e.g. %3d or %12s</td></tr>
+    <tr><td>USE_INDIRECT</td><td>Include indirect width/precision support, e.g. %*d.
+            I don't think I have ever used this.</td></tr>
+    <tr><td>USE_PLUS_SIGN</td><td>Allow use of the <a href="#flags">plus flag</a> e.g. %+d.</td></tr>
+    <tr><td>USE_SPACE_SIGN</td><td>Allow use of the <a href="#flags">space flag</a> e.g. % d.</td></tr>
+    <tr><td>USE_LEFT_JUST</td><td>Allow use of the <a href="#flags">left-justify flag</a> e.g. %-12s.</td></tr>
+    <tr><td>USE_SPECIAL</td><td>Allow use of the <a href="#flags">special # flag</a> e.g. %#02x</td></tr>
+</table>
+
+<h4>Pre-defined feature groups</h4>
+<p>
+    Most of the time you can use one of the pre-defined configs which give sensible
+    sets of options.
+</p>
+<table>
+    <tr><th>Group</th><th>Description</th></tr>
+    <tr><td>MINIMAL_INT</td><td>Decimal and lowcase hex only.</td></tr>
+    <tr><td>BASIC_INT</td><td>Signed and unsigned decimal, lowercase hex, zero and space padding.</td></tr>
+    <tr><td>SHORT_INT</td><td>All short integer features except octal, %i, indirection and specials.</td></tr>
+    <tr><td>LONG_INT</td><td>As above, but also supports long integers.</td></tr>
+    <tr><td>FULL_INT</td><td>All possible integer features.</td></tr>
+    <tr><td>FULL_FLOAT</td><td>All available features including floating point.</td></tr>
+</table>
+
 <h3>printf.h</h3>
 <p>
     This file defines the way printf() is called and the value it returns.
@@ -285,6 +349,24 @@
 
 <p class="right"><a href="#top">Top</a></p>
 <h2 id="integrate">Integration</h2>
+<p>
+    You need to add these three source files to your project: printf.c printf.h printf_cfg.h.
+    Unless you need to add or modify features you will not need to edit printf.c at all.
+    Go through printf.h and pick the options to suit your environment. If you don't need
+    any oddball ways of getting quoted strings into flash memory then there is not a lot
+    to do here and the defaults will work fine.
+</p>
+<p>
+    Go through printf_cfg.h and select the options you want. As a minimum you will
+    need to set the output function, unless you already have a function called putchar which
+    does what you want. You'll also need to select which feature set you want. Pick one of the
+    pre-defined groups to start with.
+</p>
+<p>
+    In the source files where you want to call printf you will need to explicitly #include
+    printf.h as the prototypes may be different from what comes in stdio.h with your compiler.
+    Build your project and hopefully everything will just work.
+</p>
 
 <p class="endsect">&nbsp;</p>
 
@@ -294,6 +376,19 @@
 
 <p class="right"><a href="#top">Top</a></p>
 <h2 id="test">Test code</h2>
+<p>
+    The test code provided is mainly for development use to allow the code to be checked.
+    It does three things.
+</p>
+<ol>
+    <li>It produces an executable to run on PC or
+    Linux (only tested on PC) which uses both the standard printf and this version
+    so that the output can be compared for equivalent behaviour.</li>
+    <li>It generates a hex file for AVR using Win-AVR so the test code can be run on a real
+    embedded system.</li>
+    <li>It generates AVR elf files with and without printf linked so we can see
+    exactly how much code space is taken for any given set of options.</li>
+</ol>
 
 <p class="endsect">&nbsp;</p>
 
@@ -302,7 +397,80 @@
 <!-- ************************************************************************************ -->
 
 <p class="right"><a href="#top">Top</a></p>
-<h2 id="license">License</h2>
+<h2 id="size">AVR Code Size</h2>
+<p>
+    The table below shows the approximate code size of the printf function for an 8-bit AVR,
+    using some of the pre-defined feature groups.
+</p>
+<p>
+    The size is derived by comparing a build with a single call to printf and an empty format
+    string to a build without that call. For real-world use you will need to add the overhead
+    of making real calls to printf, which includes the length of the format string itself and
+    the overhead of pushing the values onto the stack.
+</p>
+<p>
+    All values were checked using WinAVR-20100110 with no return value from printf,
+    except where stated.
+</p>
+<p>
+    The floating point figure also covers the size of floating point libraries.
+    If you are using the floating point version of printf then presumably you
+    are already using floating point in your code anyway, so some of those libraries
+    will already be in your code. A similar argument applies to long integer support.
+</p>
+<table>
+    <tr><th>Config</th><th>Size in bytes</th></tr>
+    <tr><td>MINIMAL_INT + BASIC_PRINTF_ONLY</td><td>402</td></tr>
+    <tr><td>BASIC_INT + BASIC_PRINTF_ONLY</td><td>602</td></tr>
+    <tr><td>BASIC_INT</td><td>644</td></tr>
+    <tr><td>SHORT_INT</td><td>822</td></tr>
+    <tr><td>SHORT_INT (with short int return)</td><td>846</td></tr>
+    <tr><td>LONG_INT</td><td>1044</td></tr>
+    <tr><td>FULL_INT</td><td>1228</td></tr>
+    <tr><td>FULL_FLOAT</td><td>3878</td></tr>
+</table>
+
+<p class="endsect">&nbsp;</p>
+
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+
+<p class="right"><a href="#top">Top</a></p>
+<h2 id="licence">Licence</h2>
+<p>
+    This software is licensed using the standard MIT licence. In short it means you can
+    use these functions in both open source and commercial software without having to
+    release source code or advertise the fact that you have used these files.
+    The only restriction is that you must retain the copyright notice and attribution
+    within the source code, whether you use it as-is or whether you derive your own version.
+    You are not required to publish anything, nor provide attribution in the documentation.
+    The licence terms are reproduced in full below.
+</p>
+<p>
+    Copyright &copy; 2006 - 2015 Skirrid Systems
+</p>
+<p>
+    Permission is hereby granted, free of charge, to any person obtaining a
+    copy of this software and associated documentation files (the "Software"),
+    to deal in the Software without restriction, including without limitation
+    the rights to use, copy, modify, merge, publish, distribute, sublicense,
+    and/or sell copies of the Software, and to permit persons to whom the
+    Software is furnished to do so, subject to the following conditions:
+</p>
+<p>
+    The above copyright notice and this permission notice shall be included in
+    all copies or substantial portions of the Software.
+</p>
+<p>
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+    THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+    DEALINGS IN THE SOFTWARE.
+</p>
 
 <p class="endsect">&nbsp;</p>
 
