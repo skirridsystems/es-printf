@@ -434,7 +434,9 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
 #else
     unsigned uvalue;
 #endif
+#if !HEX_CONVERT_ONLY
     unsigned base;
+#endif
 #if FEATURE(USE_SPACE_PAD) || FEATURE(USE_ZERO_PAD)
     width_t width;
     width_t fwidth;
@@ -639,7 +641,9 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                 else
 #endif
                     uvalue = va_arg(ap, unsigned);
+#if !HEX_CONVERT_ONLY
                 base = 16;
+#endif
 #endif
 #if !HEX_CONVERT_ONLY
             number:
@@ -649,9 +653,15 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                 if (precision == -1) precision = 1;
 #endif
                 // Make sure options are valid.
+#if HEX_CONVERT_ONLY
+#if FEATURE(USE_PLUS_SIGN) || FEATURE(USE_SPACE_SIGN)
+                flags &= ~(FL_PLUS|FL_SPACE);
+#endif
+#else
                 if (base != 10) flags &= ~(FL_PLUS|FL_NEG|FL_SPACE);
 #if FEATURE(USE_SPECIAL)
                 else            flags &= ~FL_SPECIAL;
+#endif
 #endif
                 // Generate the number without any prefix yet.
 #if FEATURE(USE_ZERO_PAD)
