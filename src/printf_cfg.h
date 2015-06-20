@@ -39,7 +39,7 @@ defining BASIC_PRINTF_ONLY which allows the internal API to be simplified.
 Note that sprintf will not be supported in this case.
 *************************************************************************/
 
-//#define BASIC_PRINTF_ONLY
+#define BASIC_PRINTF_ONLY
 
 /*************************************************************************
 Memory access definitions
@@ -231,6 +231,6 @@ This section provides some commonly used combinations of features.
 )
 
 // Current feature set. Use a pre-defined set or define your own.
-#define FEATURE_FLAGS   FULL_INT
+#define FEATURE_FLAGS   MINIMAL_INT
 
 #endif

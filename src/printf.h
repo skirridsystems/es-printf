@@ -6,7 +6,7 @@ printf.h: Header for consumers of printf functions.
 $Id$
 
 **************************************************************************
-Copyright (c) 2006 - 2013 Skirrid Systems
+Copyright (c) 2006 - 2015 Skirrid Systems
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -39,7 +39,7 @@ On a small micro you can define the return type as unsigned char if you
 are sure the total output width will never exceed 255, or unsigned short.
 *************************************************************************/
 
-#define PRINTF_T unsigned short
+//#define PRINTF_T unsigned short
 
 // Create a type definition for the return value
 #ifndef PRINTF_T
