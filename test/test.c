@@ -100,9 +100,11 @@ int main(int argc, char *argv[])
 #if FEATURE(USE_FLOAT)
     double one = 1.0;
 #endif
-    tsprintf(buf, "Hello world %d %% %z\n", 123);
+    tsprintf(buf, "Hello world %x %% %z\n", 0x123);
 #if FEATURE(USE_SPACE_PAD) || FEATURE(USE_ZERO_PAD)
+  #if FEATURE(USE_SIGNED)
     tprintf("Int %d %4d %04d %+04d % 4d %-4d. %+3d %+3d % 3d % 3d\n", N, N, N, N, N, N, 0, -1, 0, -1);
+  #endif
   #if FEATURE(USE_HEX_UPPER) || FEATURE(USE_HEX_LOWER)
     tprintf("Hex %x %4x %018X %+x % x %-4x. %+#x\n", X, X, X, X, X, X, X);
   #endif
@@ -117,7 +119,9 @@ int main(int argc, char *argv[])
     tprintf("Prec %.d %.2d %.2d %.2d %-5.3s %.3s.\n", 0, 1, 0, -1, S, S);
   #endif
 #else
+  #if FEATURE(USE_SIGNED)
     tprintf("Int %d %+d %+d % d % d\n", N, 0, -1, 0, -1);
+  #endif
   #if FEATURE(USE_HEX_UPPER) || FEATURE(USE_HEX_LOWER)
     tprintf("Hex %x %+x % x\n", X, X, X);
   #endif

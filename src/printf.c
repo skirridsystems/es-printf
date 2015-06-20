@@ -6,7 +6,7 @@ printf.c: Main source file for printf family of functions.
 $Id$
 
 **************************************************************************
-Copyright (c) 2006 - 2013 Skirrid Systems
+Copyright (c) 2006 - 2015 Skirrid Systems
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -98,6 +98,9 @@ DEALINGS IN THE SOFTWARE.
   #define MAX_POWER     32
   #define FLOAT_DIGITS  8
 #endif
+
+// Check whether integer or octal support is needed.
+#define HEX_CONVERT_ONLY    !(FEATURE(USE_SIGNED) || FEATURE(USE_SIGNED_I) || FEATURE(USE_UNSIGNED) || FEATURE(USE_OCTAL))
 
 #if FEATURE(USE_FLOAT)
 static const double smalltable[] = {
@@ -558,12 +561,15 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
 #endif
             switch (convert)
             {
+#if FEATURE(USE_CHAR)
             case 'c':
 #if FEATURE(USE_SPACE_PAD)
                 width = 0;
 #endif
                 *--p = (char) va_arg(ap, int);
                 break;
+#endif
+#if FEATURE(USE_SIGNED)
             case 'd':
 #if FEATURE(USE_SIGNED_I)
             case 'i':
@@ -585,6 +591,7 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                     uvalue = -uvalue;
                 }
                 goto number;
+#endif
 #if FEATURE(USE_UNSIGNED)
             case 'u':
 #if FEATURE(USE_LONG)
@@ -622,7 +629,9 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                     uvalue = va_arg(ap, unsigned);
                 base = 16;
 #endif
+#if !HEX_CONVERT_ONLY
             number:
+#endif
 #if FEATURE(USE_PRECISION)
                 // Set default precision
                 if (precision == -1) precision = 1;
@@ -652,7 +661,11 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                 while (uvalue)
 #endif
                 {
+#if HEX_CONVERT_ONLY
+                    c = (char) ((uvalue & 0x0f) + '0');
+#else
                     c = (char) ((uvalue % base) + '0');
+#endif
 #if FEATURE(USE_HEX_LOWER) || FEATURE(USE_HEX_UPPER)
                     if (c > '9')
                     {
@@ -668,7 +681,11 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                     }
 #endif
                     *--p = c;
+#if HEX_CONVERT_ONLY
+                    uvalue >>= 4;
+#else
                     uvalue /= base;
+#endif
 #if FEATURE(USE_ZERO_PAD)
                     --fwidth;
 #endif
@@ -750,9 +767,11 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                 precision = -1;
                 break;
 #endif
+#if FEATURE(USE_STRING)
             case 's':
                 p = va_arg(ap, char *);
                 break;
+#endif
             default:
                 *--p = convert;
                 break;
