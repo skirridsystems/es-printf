@@ -100,7 +100,8 @@ DEALINGS IN THE SOFTWARE.
 #endif
 
 // Check whether integer or octal support is needed.
-#define HEX_CONVERT_ONLY    !(FEATURE(USE_SIGNED) || FEATURE(USE_SIGNED_I) || FEATURE(USE_UNSIGNED) || FEATURE(USE_OCTAL))
+#define HEX_CONVERT_ONLY    !(FEATURE(USE_SIGNED) || FEATURE(USE_SIGNED_I) || FEATURE(USE_UNSIGNED) || \
+                              FEATURE(USE_OCTAL) || FEATURE(USE_BINARY))
 
 #if FEATURE(USE_FLOAT)
 static const double smalltable[] = {
@@ -612,6 +613,17 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
 #endif
                     uvalue = va_arg(ap, unsigned);
                 base = 8;
+                goto number;
+#endif
+#if FEATURE(USE_BINARY)
+            case 'b':
+#if FEATURE(USE_LONG)
+                if (flags & FL_LONG)
+                    uvalue = va_arg(ap, unsigned long);
+                else
+#endif
+                    uvalue = va_arg(ap, unsigned);
+                base = 2;
                 goto number;
 #endif
 #if FEATURE(USE_HEX_LOWER)

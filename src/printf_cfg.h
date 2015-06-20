@@ -139,6 +139,9 @@ These are combined as needed to produce the FEATURE_FLAGS macro.
 // Include support for %s string
 #define USE_STRING      (1<<10)
 
+// Include support for %s string
+#define USE_BINARY      (1<<11)
+
 // Include precision support when floating point is not present.
 // Precision is automatically enabled when floating point support is used.
 #define USE_PRECISION   (1<<16)
@@ -184,7 +187,7 @@ This section provides some commonly used combinations of features.
         USE_SIGNED | USE_UNSIGNED | USE_HEX_LOWER | \
         USE_ZERO_PAD | USE_SPACE_PAD )
 
-// All short integer features except octal, %i, indirection and specials.
+// All short integer features except octal, binary, %i, indirection and specials.
 #define SHORT_INT ( \
         USE_CHAR | USE_STRING | \
         USE_SIGNED | USE_UNSIGNED | USE_HEX_LOWER | USE_HEX_UPPER | \
@@ -197,7 +200,7 @@ This section provides some commonly used combinations of features.
 
 // All possible integer features.
 #define FULL_INT ( \
-        USE_OCTAL | USE_SIGNED_I | USE_INDIRECT | USE_SPECIAL | LONG_INT )
+        USE_BINARY | USE_OCTAL | USE_SIGNED_I | USE_INDIRECT | USE_SPECIAL | LONG_INT )
 
 // All available features including floating point.
 #define FULL_FLOAT ( \
@@ -207,6 +210,7 @@ This section provides some commonly used combinations of features.
 #define CUSTOM_SET ( \
         USE_FLOAT       \
         USE_LONG        \
+        USE_BINARY      \
         USE_OCTAL       \
         USE_SIGNED      \
         USE_SIGNED_I    \
@@ -227,6 +231,6 @@ This section provides some commonly used combinations of features.
 )
 
 // Current feature set. Use a pre-defined set or define your own.
-#define FEATURE_FLAGS   SHORT_INT
+#define FEATURE_FLAGS   FULL_INT
 
 #endif

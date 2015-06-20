@@ -111,7 +111,12 @@ int main(int argc, char *argv[])
   #if FEATURE(USE_OCTAL)
     tprintf("Oct %o %4o %04o %+o % o %-4o. %+#o\n", O, O, O, O, O, O, O);
   #endif
+  #if FEATURE(USE_BINARY)
+    tprintf("Bin %b %4b %04b %+b % b %-4b. %+#b\n", O, O, O, O, O, O, O);
+  #endif
+  #if FEATURE(USE_STRING)
     tprintf("Str [%s] [%8s] [%-8s]\n", S, S, S);
+  #endif
   #if FEATURE(USE_INDIRECT)
     tprintf("Ind %*d %*s.\n", 4, N, 8, S);
   #endif

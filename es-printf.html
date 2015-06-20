@@ -275,6 +275,7 @@
             print longs by splitting into two shorts.</td></tr>
     <tr><td>USE_OCTAL</td><td>Traditionally printf supports octal output but you very
             rarely see it used, so why waste the code space?</td></tr>
+    <tr><td>USE_BINARY</td><td>An extension to printf to use %b for binary output.</td></tr>
     <tr><td>USE_SIGNED</td><td>Supports %d for signed decimal output.</td></tr>
     <tr><td>USE_SIGNED_I</td><td>Supports %i as a synonym for %d. Omitting this doesn't
             save a lot, but every little helps.</td></tr>
@@ -309,7 +310,7 @@
     <tr><td>HEX_INT</td><td>Lowercase hex only, no char or string.</td></tr>
     <tr><td>MINIMAL_INT</td><td>Decimal and lowercase hex only, no char or string.</td></tr>
     <tr><td>BASIC_INT</td><td>Signed and unsigned decimal, lowercase hex, zero and space padding.</td></tr>
-    <tr><td>SHORT_INT</td><td>All short integer features except octal, %i, indirection and specials.</td></tr>
+    <tr><td>SHORT_INT</td><td>All short integer features except binary, octal, %i, indirection and specials.</td></tr>
     <tr><td>LONG_INT</td><td>As above, but also supports long integers.</td></tr>
     <tr><td>FULL_INT</td><td>All possible integer features.</td></tr>
     <tr><td>FULL_FLOAT</td><td>All available features including floating point.</td></tr>
