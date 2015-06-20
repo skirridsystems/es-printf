@@ -151,7 +151,7 @@
     <tr><td>+</td><td>Always output a preceeding plus or minus sign (+ or -) even for positive numbers.
             By default, only negative numbers are preceded with a - sign.</td></tr>
     <tr><td>(space)</td><td>If no minus sign is needed, output a space before the value.</td></tr>
-    <tr><td>#</td><td>Used with o, x or X specifiers the value is preceeded with 0, 0x or 0X
+    <tr><td>#</td><td>Used with o, b, x or X specifiers the value is preceeded with 0, 0b, 0x or 0X
             respectively.<br />
             Used with e, E, f, g or G it forces the output to contain a decimal point even if
             no more digits follow. By default, if no digits follow, no decimal point is written.</td></tr>
@@ -169,7 +169,7 @@
 
 <table id="precision">
     <tr><th>.Precision</th><th>Description</th></tr>
-    <tr><td>.number</td><td>For integer specifiers (d, i, o, u, x, X): precision specifies the
+    <tr><td>.number</td><td>For integer specifiers (d, i, u, b, o, x, X): precision specifies the
             minimum number of digits to be written. If the value to be written is shorter than
             this number, the result is padded with leading zeros. The value is not truncated
             even if the result is longer. A precision of 0 means that no character is written
@@ -190,7 +190,7 @@
 </p>
 <table>
     <tr><th></th><th colspan="5">Specifiers</th></tr>
-    <tr><th>Length</th><th>d i</th><th>u o x X</th><th>f e E g G</th><th>c</th><th>s</th></tr>
+    <tr><th>Length</th><th>d i</th><th>u b o x X</th><th>f e E g G</th><th>c</th><th>s</th></tr>
     <tr><td>(none)</td><td>int</td><td>unsigned int</td><td>double</td><td>int</td><td>char*</td></tr>
     <tr><td>l</td><td>long int</td><td>unsigned long int</td><td></td><td></td><td></td></tr>
 </table>
