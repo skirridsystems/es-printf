@@ -6,7 +6,7 @@ print_cfg.h: Select the build options for printf functions.
 $Id$
 
 **************************************************************************
-Copyright (c) 2006 - 2013 Skirrid Systems
+Copyright (c) 2006 - 2015 Skirrid Systems
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -113,47 +113,56 @@ These are combined as needed to produce the FEATURE_FLAGS macro.
 // Include support for octal formatting
 #define USE_OCTAL       (1<<2)
 
+// Include support for %d decimal formatting
+#define USE_SIGNED      (1<<3)
+
 // Include support for the %i synonym for %d
-#define USE_SIGNED_I    (1<<3)
+#define USE_SIGNED_I    (1<<4)
 
 // Include support for the %u unsigned decimal specifier
-#define USE_UNSIGNED    (1<<4)
+#define USE_UNSIGNED    (1<<5)
 
 // Include support for the %x hex specifier (lowercase output)
-#define USE_HEX_LOWER   (1<<5)
+#define USE_HEX_LOWER   (1<<6)
 
 // Include support for the %X hex specifier (uppercase output)
-#define USE_HEX_UPPER   (1<<6)
+#define USE_HEX_UPPER   (1<<7)
 
 // Force uppercase output with %x.
 // Used in conjunction with USE_HEX_LOWER.
 // Ignored if USE_HEX_UPPER is also set.
-#define USE_HEX_UPPER_L (1<<7)
+#define USE_HEX_UPPER_L (1<<8)
+
+// Include support for %c single character
+#define USE_CHAR        (1<<9)
+
+// Include support for %s string
+#define USE_STRING      (1<<10)
 
 // Include precision support when floating point is not present.
 // Precision is automatically enabled when floating point support is used.
-#define USE_PRECISION   (1<<8)
+#define USE_PRECISION   (1<<16)
 
 // Allow use of leading zero padding e.g. "%03d"
-#define USE_ZERO_PAD    (1<<9)
+#define USE_ZERO_PAD    (1<<17)
 
 // Allow use of space padding e.g. "%3d" or "%12s"
-#define USE_SPACE_PAD   (1<<10)
+#define USE_SPACE_PAD   (1<<18)
 
 // Include indirect width/precision support e.g. "%*d"
-#define USE_INDIRECT    (1<<11)
+#define USE_INDIRECT    (1<<19)
 
 // Allow forcing a leading plus sign e.g. "%+3d"
-#define USE_PLUS_SIGN   (1<<12)
+#define USE_PLUS_SIGN   (1<<20)
 
 // Allow forcing a leading space (instead of + or -) in front of zero e.g. "% 3d"
-#define USE_SPACE_SIGN  (1<<13)
+#define USE_SPACE_SIGN  (1<<21)
 
 // Include support for the left-justify '-' flag.
-#define USE_LEFT_JUST   (1<<14)
+#define USE_LEFT_JUST   (1<<22)
 
 // Include support for the special '#' flag.
-#define USE_SPECIAL     (1<<15)
+#define USE_SPECIAL     (1<<23)
 
 /*************************************************************************
 Pre-defined feature sets
@@ -161,17 +170,24 @@ Pre-defined feature sets
 This section provides some commonly used combinations of features.
 *************************************************************************/
 
-// Decimal and lowercase hex only.
-#define MINIMAL_INT ( \
+// Lowercase hex integers only.
+#define HEX_INT ( \
         USE_HEX_LOWER )
 
-// Signed and unsigned decimal, lower case hex, zero & space padding.
+// Decimal and lowercase hex only.
+#define MINIMAL_INT ( \
+        USE_SIGNED | USE_HEX_LOWER )
+
+// Signed and unsigned decimal, lower case hex, zero & space padding, plus char and string
 #define BASIC_INT ( \
-        USE_UNSIGNED | USE_HEX_LOWER | USE_ZERO_PAD | USE_SPACE_PAD )
+        USE_CHAR | USE_STRING | \
+        USE_SIGNED | USE_UNSIGNED | USE_HEX_LOWER | \
+        USE_ZERO_PAD | USE_SPACE_PAD )
 
 // All short integer features except octal, %i, indirection and specials.
 #define SHORT_INT ( \
-        USE_UNSIGNED | USE_HEX_LOWER | USE_HEX_UPPER | \
+        USE_CHAR | USE_STRING | \
+        USE_SIGNED | USE_UNSIGNED | USE_HEX_LOWER | USE_HEX_UPPER | \
         USE_PRECISION  | USE_ZERO_PAD   | USE_SPACE_PAD | \
         USE_PLUS_SIGN  | USE_SPACE_SIGN | USE_LEFT_JUST )
 
@@ -192,11 +208,14 @@ This section provides some commonly used combinations of features.
         USE_FLOAT       \
         USE_LONG        \
         USE_OCTAL       \
+        USE_SIGNED      \
         USE_SIGNED_I    \
         USE_UNSIGNED    \
         USE_HEX_LOWER   \
         USE_HEX_UPPER   \
         USE_HEX_UPPER_L \
+        USE_CHAR        \
+        USE_STRING      \
         USE_PRECISION   \
         USE_ZERO_PAD    \
         USE_SPACE_PAD   \

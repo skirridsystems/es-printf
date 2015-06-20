@@ -275,6 +275,7 @@
             print longs by splitting into two shorts.</td></tr>
     <tr><td>USE_OCTAL</td><td>Traditionally printf supports octal output but you very
             rarely see it used, so why waste the code space?</td></tr>
+    <tr><td>USE_SIGNED</td><td>Supports %d for signed decimal output.</td></tr>
     <tr><td>USE_SIGNED_I</td><td>Supports %i as a synonym for %d. Omitting this doesn't
             save a lot, but every little helps.</td></tr>
     <tr><td>USE_UNSIGNED</td><td>Supports %u for unsigned decimal output. In many cases
@@ -283,6 +284,8 @@
     <tr><td>USE_HEX_UPPER</td><td>Supports %X (uppercase hex output).</td></tr>
     <tr><td>USE_HEX_UPPER_L</td><td>In conjunction with %x, if you decide you want all output to
             be uppercase instead you can include this option instead of changing all the format strings.</td></tr>
+    <tr><td>USE_CHAR</td><td>Supports %c for single character output.</td></tr>
+    <tr><td>USE_STRING</td><td>Supports %s for string output.</td></tr>
     <tr><td>USE_PRECISION</td><td>Include <a href="#precision">precision</a> support when floating point is not present.
             Precision is automatically enabled when floating point support is used.
             For integer work it is not very useful, though strings sometime use it.</td></tr>
@@ -303,7 +306,8 @@
 </p>
 <table>
     <tr><th>Group</th><th>Description</th></tr>
-    <tr><td>MINIMAL_INT</td><td>Decimal and lowcase hex only.</td></tr>
+    <tr><td>HEX_INT</td><td>Lowercase hex only, no char or string.</td></tr>
+    <tr><td>MINIMAL_INT</td><td>Decimal and lowercase hex only, no char or string.</td></tr>
     <tr><td>BASIC_INT</td><td>Signed and unsigned decimal, lowercase hex, zero and space padding.</td></tr>
     <tr><td>SHORT_INT</td><td>All short integer features except octal, %i, indirection and specials.</td></tr>
     <tr><td>LONG_INT</td><td>As above, but also supports long integers.</td></tr>
@@ -420,7 +424,8 @@
 </p>
 <table>
     <tr><th>Config</th><th>Size in bytes</th></tr>
-    <tr><td>MINIMAL_INT + BASIC_PRINTF_ONLY</td><td>402</td></tr>
+    <tr><td>HEX_INT + BASIC_PRINTF_ONLY</td><td>226</td></tr>
+    <tr><td>MINIMAL_INT + BASIC_PRINTF_ONLY</td><td>358</td></tr>
     <tr><td>BASIC_INT + BASIC_PRINTF_ONLY</td><td>602</td></tr>
     <tr><td>BASIC_INT</td><td>644</td></tr>
     <tr><td>SHORT_INT</td><td>822</td></tr>
