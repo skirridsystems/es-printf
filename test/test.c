@@ -29,7 +29,7 @@ DEALINGS IN THE SOFTWARE.
 ******************************************************************************/
 
 #ifdef TEST_AVR
-    #include "printf.h"
+    #include "../src/printf.h"
     #include <avr/io.h>
     #include <avr/pgmspace.h>
     #define GET_FORMAT(p)   pgm_read_byte(p)
@@ -51,7 +51,7 @@ DEALINGS IN THE SOFTWARE.
 /* Include the printf source here so we can control the definitions
    used in the test environment. You would not normally need to do this.
 */
-#include "printf.c"
+#include "../src/printf.c"
 
 #ifdef TEST_AVR
     /* In the AVR test environment define a new macro to use our function
