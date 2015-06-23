@@ -29,7 +29,6 @@ DEALINGS IN THE SOFTWARE.
 
 // System and config header files are included by the parent stub file.
 #include <stdarg.h>
-#include <string.h>
 #include <math.h>
 #include "printf.h"
 #include "printf_cfg.h"
@@ -423,6 +422,18 @@ static char *format_float(double number, int ndigits, unsigned char flags, unsig
 }
 #endif
 
+#if FEATURE(USE_SPACE_PAD)
+// Helper function to find length of string.
+// This offers a small space saving over strlen and allows
+// for future expansion to use strings in flash.
+static width_t p_len(char *p)
+{
+    width_t len = 0;
+    while (*p++) ++len;
+    return len;
+}
+#endif
+
 #ifdef BASIC_PRINTF_ONLY
 static printf_t doprnt(void (*func)(char c), const char *fmt, va_list ap)
 #else
@@ -803,22 +814,26 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
 
 #if FEATURE(USE_SPACE_PAD)
             // Check width of formatted text.
-            fwidth = strlen(p);
+            fwidth = p_len(p);
             // Copy formatted text with leading or trailing space.
             // A positive value for precision will limit the length of p used.
-            while ((*p && precision != 0) || width > 0)
+            for (;;)
             {
-                if (((flags & FL_LEFT_JUST) || width <= fwidth) && *p && precision != 0) c = *p++;
+                c = *p;
+                if ((c == '\0' || precision == 0) && width <= 0) break;
+                if (((flags & FL_LEFT_JUST) || width <= fwidth) && c && precision != 0) ++p;
                 else c = ' ';
 #else
-  #if FEATURE(USE_PRECISION)
-            // A positive value for precision will limit the length of p used.
-            while (*p && precision != 0)
-  #else
-            while (*p)
-  #endif
+            for (;;)
             {
-                c = *p++;
+                c = *p;
+  #if FEATURE(USE_PRECISION)
+                // A positive value for precision will limit the length of p used.
+                if (c == '\0' || precision == 0) break;
+  #else
+                if (c == '\0') break;
+  #endif
+                ++p;
 #endif
 #ifdef BASIC_PRINTF_ONLY
                 func(c);            // Basic output function.
