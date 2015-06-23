@@ -83,6 +83,9 @@ Set some options that the C pre-processor will not tell us about.
 // Does the compiler support double precision or silently degrade to single?
 // #define NO_DOUBLE_PRECISION
 
+// Does the compiler support isnan and isinf floating point functions?
+// #define NO_ISNAN_ISINF
+
 /*************************************************************************
 Formatted item width
 
@@ -144,28 +147,28 @@ These are combined as needed to produce the FEATURE_FLAGS macro.
 
 // Include precision support when floating point is not present.
 // Precision is automatically enabled when floating point support is used.
-#define USE_PRECISION   (1<<16)
+#define USE_PRECISION   (1UL<<16)
 
 // Allow use of leading zero padding e.g. "%03d"
-#define USE_ZERO_PAD    (1<<17)
+#define USE_ZERO_PAD    (1UL<<17)
 
 // Allow use of space padding e.g. "%3d" or "%12s"
-#define USE_SPACE_PAD   (1<<18)
+#define USE_SPACE_PAD   (1UL<<18)
 
 // Include indirect width/precision support e.g. "%*d"
-#define USE_INDIRECT    (1<<19)
+#define USE_INDIRECT    (1UL<<19)
 
 // Allow forcing a leading plus sign e.g. "%+3d"
-#define USE_PLUS_SIGN   (1<<20)
+#define USE_PLUS_SIGN   (1UL<<20)
 
 // Allow forcing a leading space (instead of + or -) in front of zero e.g. "% 3d"
-#define USE_SPACE_SIGN  (1<<21)
+#define USE_SPACE_SIGN  (1UL<<21)
 
 // Include support for the left-justify '-' flag.
-#define USE_LEFT_JUST   (1<<22)
+#define USE_LEFT_JUST   (1UL<<22)
 
 // Include support for the special '#' flag.
-#define USE_SPECIAL     (1<<23)
+#define USE_SPECIAL     (1UL<<23)
 
 /*************************************************************************
 Pre-defined feature sets
