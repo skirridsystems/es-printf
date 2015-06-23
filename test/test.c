@@ -28,12 +28,17 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 ******************************************************************************/
 
-#ifdef TEST_AVR
+#if defined(TEST_AVR)
     #include "../src/printf.h"
     #include <avr/io.h>
     #include <avr/pgmspace.h>
     #define GET_FORMAT(p)   pgm_read_byte(p)
     void outchar(char c) {}
+    #define PUTCHAR_FUNC    outchar
+    #define NO_DOUBLE_PRECISION
+#elif defined(TEST_STM8)
+    #include "../src/printf.h"
+    void outchar(char c) { (void) c; }
     #define PUTCHAR_FUNC    outchar
     #define NO_DOUBLE_PRECISION
 #else
@@ -53,7 +58,7 @@ DEALINGS IN THE SOFTWARE.
 */
 #include "../src/printf.c"
 
-#ifdef TEST_AVR
+#if defined(TEST_AVR)
     /* In the AVR test environment define a new macro to use our function
        with strings in flash.
     */
@@ -62,6 +67,13 @@ DEALINGS IN THE SOFTWARE.
     #define tsprintf(buf, format, args...)  printf_rom(PSTR(format), ## args)
   #else
     #define tsprintf(buf, format, args...)  sprintf_rom(buf, PSTR(format), ## args)
+  #endif
+#elif defined(TEST_STM8)
+    #define tprintf(...)                    printf_rom(__VA_ARGS__)
+  #ifdef BASIC_PRINTF_ONLY
+    #define tsprintf(buf, ...)              printf_rom(__VA_ARGS__)
+  #else
+    #define tsprintf(buf, ...)              sprintf_rom(buf, __VA_ARGS__)
   #endif
 #else
     /* In the PC test environment reinstate printf to call the normal library function.
@@ -148,5 +160,7 @@ int main(int argc, char *argv[])
     tprintf("NaN/Inf = %f %f\n", sqrt(-1), one / (one - 1.0));
 #endif
 #endif
+    (void) argc;    // Suppress compiler warning about unused arguments.
+    (void) argv;
     return 0;
 }

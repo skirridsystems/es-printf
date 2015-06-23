@@ -67,8 +67,7 @@ DEALINGS IN THE SOFTWARE.
 
 // Precision is required for floating point support
 #if FEATURE(USE_FLOAT) && !FEATURE(USE_PRECISION)
-    #undef FEATURE(USE_PRECISION)
-    #define FEATURE(USE_PRECISION)   1
+    #error USE_PRECISION required with USE_FLOAT
 #endif
 
 // Bits in the flags variable
@@ -136,6 +135,7 @@ static char *format_float(double number, int ndigits, unsigned char flags, unsig
     char *p = buf + 2;
     char *pend;
     
+#ifndef NO_ISNAN_ISINF
     // Handle special values
     if (isinf(number))
     {
@@ -153,6 +153,7 @@ static char *format_float(double number, int ndigits, unsigned char flags, unsig
         buf[3] = '\0';
         return buf;
     }
+#endif
 
     // Handle all numbers as positive.
     if (number < 0)
@@ -471,8 +472,10 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
 
     buffer[BUFMAX] = '\0';
 
-    while ((convert = GET_FORMAT(fmt)) != 0)
+    for (;;)
     {
+        convert = GET_FORMAT(fmt);
+        if (convert == 0) break;
         if (convert == '%')
         {
             p = buffer + BUFMAX;
@@ -875,10 +878,12 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
 // streams or to avoid output mixing in multi-threaded use.
 #ifdef BASIC_PRINTF_ONLY
 static void putout(char c)
+{
 #else
 static void putout(char c, void *context)
-#endif
 {
+    (void) context;     // Suppress compiler warning about unused argument.
+#endif
     PUTCHAR_FUNC(c);
 }
 
