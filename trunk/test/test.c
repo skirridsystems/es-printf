@@ -41,6 +41,7 @@ DEALINGS IN THE SOFTWARE.
     void outchar(char c) { (void) c; }
     #define PUTCHAR_FUNC    outchar
     #define NO_DOUBLE_PRECISION
+    #define NO_ISNAN_ISINF
 #else
     #include <stdio.h>
     #define EXP_3_DIGIT

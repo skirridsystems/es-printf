@@ -248,6 +248,13 @@
     can be reduced a little using this option, rather than try to handle data
     which does not actually exist.
 </p>
+<h4>#define NO_ISNAN_ISINF</h4>
+<p>
+    Some compilers do not support the isnan and isinf floating point functions
+    to detect the not-a-number and infinity special cases. If this option is
+    defined then those tests are simply ignored and the output for those values
+    is indeterminate.
+</p>
 
 <h4>typedef width_t</h4>
 <p>
