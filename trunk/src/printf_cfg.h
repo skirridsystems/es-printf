@@ -142,8 +142,11 @@ These are combined as needed to produce the FEATURE_FLAGS macro.
 // Include support for %s string
 #define USE_STRING      (1<<10)
 
-// Include support for %s string
-#define USE_BINARY      (1<<11)
+// Include support for %S string in flash memory
+#define USE_FSTRING     (1<<11)
+
+// Include support for %b binary specifier
+#define USE_BINARY      (1<<12)
 
 // Include precision support when floating point is not present.
 // Precision is automatically enabled when floating point support is used.
@@ -223,6 +226,7 @@ This section provides some commonly used combinations of features.
         USE_HEX_UPPER_L \
         USE_CHAR        \
         USE_STRING      \
+        USE_FSTRING     \
         USE_PRECISION   \
         USE_ZERO_PAD    \
         USE_SPACE_PAD   \

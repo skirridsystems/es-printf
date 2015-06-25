@@ -160,6 +160,9 @@ int main(int argc, char *argv[])
     tprintf("Max/Min = %e %e\n", DBL_MAX, DBL_MIN);
     tprintf("NaN/Inf = %f %f\n", sqrt(-1), one / (one - 1.0));
 #endif
+#if FEATURE(USE_FSTRING) && defined(TEST_AVR)
+    tprintf("Str [%s] [%S] [%8S] [%-8S]\n", S, PSTR(S), PSTR(S), PSTR(S));
+#endif
 #endif
     (void) argc;    // Suppress compiler warning about unused arguments.
     (void) argv;

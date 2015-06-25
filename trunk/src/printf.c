@@ -56,7 +56,7 @@ DEALINGS IN THE SOFTWARE.
 
 // Macro used to check presence of a feature flag.
 // These are defined in print_cfg.h
-#define FEATURE(flag)   (FEATURE_FLAGS & (flag))
+#define FEATURE(flag)   ((FEATURE_FLAGS) & (flag))
 
 // Size of buffer for formatting numbers into
 #if FEATURE(USE_FLOAT)
@@ -82,6 +82,7 @@ DEALINGS IN THE SOFTWARE.
 #define FL_SPACE        (1<<4)
 #define FL_NEG          (1<<5)
 #define FL_LONG         (1<<6)
+#define FL_FSTR         (1<<7)
 
 // Bits in the fflags variable
 #define FF_UCASE        (1<<0)
@@ -426,11 +427,28 @@ static char *format_float(double number, int ndigits, unsigned char flags, unsig
 #if FEATURE(USE_SPACE_PAD)
 // Helper function to find length of string.
 // This offers a small space saving over strlen and allows
-// for future expansion to use strings in flash.
+// for checking strings in flash.
+#if FEATURE(USE_FSTRING)
+static width_t p_len(char *p, unsigned char flags)
+#else
 static width_t p_len(char *p)
+#endif
 {
     width_t len = 0;
-    while (*p++) ++len;
+#if FEATURE(USE_FSTRING)
+    if (flags & FL_FSTR)
+    {
+        while (GET_FORMAT(p))
+        {
+            ++p;
+            ++len;
+        }
+    }
+    else
+#endif
+    {
+        while (*p++) ++len;
+    }
     return len;
 }
 #endif
@@ -806,6 +824,11 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                 break;
 #endif
 #if FEATURE(USE_STRING)
+  #if FEATURE(USE_FSTRING)
+            case 'S':
+                flags |= FL_FSTR;
+                // fall through
+  #endif
             case 's':
                 p = va_arg(ap, char *);
                 break;
@@ -817,11 +840,20 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
 
 #if FEATURE(USE_SPACE_PAD)
             // Check width of formatted text.
+  #if FEATURE(USE_FSTRING)
+            fwidth = p_len(p, flags);
+  #else
             fwidth = p_len(p);
+  #endif
             // Copy formatted text with leading or trailing space.
             // A positive value for precision will limit the length of p used.
             for (;;)
             {
+  #if FEATURE(USE_FSTRING)
+                if (flags & FL_FSTR)
+                    c = GET_FORMAT(p);
+                else
+  #endif
                 c = *p;
                 if ((c == '\0' || precision == 0) && width <= 0) break;
                 if (((flags & FL_LEFT_JUST) || width <= fwidth) && c && precision != 0) ++p;
@@ -829,6 +861,11 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
 #else
             for (;;)
             {
+  #if FEATURE(USE_FSTRING)
+                if (flags & FL_FSTR)
+                    c = GET_FORMAT(p);
+                else
+  #endif
                 c = *p;
   #if FEATURE(USE_PRECISION)
                 // A positive value for precision will limit the length of p used.
