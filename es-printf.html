@@ -138,6 +138,7 @@
     <tr><td>G</td><td>Use shortest representation: %f or %E</td><td>789.12</td></tr>
     <tr><td>c</td><td>Character</td><td>k</td></tr>
     <tr><td>s</td><td>String of characters</td><td>example</td></tr>
+    <tr><td>S</td><td>String of characters (stored in flash rom)</td><td>example</td></tr>
     <tr><td>%</td><td>A double % character will write a single % to output</td><td>%</td></tr>
 </table>
 
@@ -177,7 +178,7 @@
             For e, E and f specifiers: this is the number of digits to be printed after the
             decimal point (by default, this is 6).<br />
             For g and G specifiers: This is the maximum number of significant digits to be printed.<br />
-            For s: this is the maximum number of characters to be printed. By default all
+            For s and S: this is the maximum number of characters to be printed. By default all
             characters are printed until the ending null character is encountered.<br />
             If the period is specified without an explicit value for precision, 0 is assumed.</td></tr>
     <tr><td>.*</td><td>The precision is not specified in the format string, but as an additional
@@ -190,7 +191,7 @@
 </p>
 <table>
     <tr><th></th><th colspan="5">Specifiers</th></tr>
-    <tr><th>Length</th><th>d i</th><th>u b o x X</th><th>f e E g G</th><th>c</th><th>s</th></tr>
+    <tr><th>Length</th><th>d i</th><th>u b o x X</th><th>f e E g G</th><th>c</th><th>s S</th></tr>
     <tr><td>(none)</td><td>int</td><td>unsigned int</td><td>double</td><td>int</td><td>char*</td></tr>
     <tr><td>l</td><td>long int</td><td>unsigned long int</td><td></td><td></td><td></td></tr>
 </table>
@@ -222,7 +223,7 @@
     defining BASIC_PRINTF_ONLY which allows the internal API to be simplified.
     Note that sprintf will not be supported in this case.
 </p>
-<h4>#define GET_FORMAT(ptr)</h4>
+<h4 id="get_format">#define GET_FORMAT(ptr)</h4>
 <p>
     The GET_FORMAT(ptr) macro is used to access a character in the printf
     format string. By default this does a normal memory pointer access, but
@@ -295,6 +296,10 @@
             be uppercase instead you can include this option instead of changing all the format strings.</td></tr>
     <tr><td>USE_CHAR</td><td>Supports %c for single character output.</td></tr>
     <tr><td>USE_STRING</td><td>Supports %s for string output.</td></tr>
+    <tr><td>USE_FSTRING</td><td>Supports %S for string output where the string is embedded in flash.
+            This option is only useful in micros such as the AVR where strings in flash
+            require different memory access methods.
+            The <a href="#get_format">GET_FORMAT</a> macro is used to access the string in this case.</td></tr>
     <tr><td>USE_PRECISION</td><td>Include <a href="#precision">precision</a> support when floating point is not present.
             Precision is automatically enabled when floating point support is used.
             For integer work it is not very useful, though strings sometime use it.</td></tr>
