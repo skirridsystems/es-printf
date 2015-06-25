@@ -396,7 +396,8 @@
 <h2 id="test">Test code</h2>
 <p>
     The test code provided is mainly for development use to allow the code to be checked.
-    It does three things.
+    If you are just integrating es-printf into your own application you won't need this part.
+    It does several things.
 </p>
 <ol>
     <li>It produces an executable to run on PC or
@@ -406,7 +407,22 @@
     embedded system.</li>
     <li>It generates AVR elf files with and without printf linked so we can see
     exactly how much code space is taken for any given set of options.</li>
+    <li>It generates a hex file for STM8 using the Raisonance compiler. This is to validate
+    the code on another very different 8-bit architecture.</li>
 </ol>
+<p>
+    The PC test code uses the gcc compiler which is assumed to be in the default path.
+</p>
+<p>
+    The AVR test code uses WinAVR-20100110 compiler which is assumed to be at its default
+    installation location. More recent versions are shipped as part of Atmel Studio and
+    are located in the Program Files directory. You would need to adjust the paths in the
+    makefile to cope with this.
+</p>
+<p>
+    The STM8 test code is built using the Raisonance Ride7 IDE. You need to load the .rprj
+    file and build it.
+</p>
 
 <p class="endsect">&nbsp;</p>
 
