@@ -34,7 +34,31 @@ DEALINGS IN THE SOFTWARE.
     #include <avr/io.h>
     #include <avr/pgmspace.h>
     #define GET_FORMAT(p)   pgm_read_byte(p)
+  #ifdef SIZE
     void outchar(char c) {}
+  #else
+    // Real output functions for ATMega running at 8MHz.
+    #define F_CPU       8000000
+    #define BAUD_RATE   19200
+    #define BAUD_RELOAD     (F_CPU / 8 / BAUD_RATE - 1)
+    #include <util/delay.h>
+    void outchar(char c)
+    {
+        while (!(UCSRA & (1<<UDRE)))
+            ;
+        UDR = c;
+    }
+    void outinit(void)
+    {
+        UCSRA = (1<<U2X);
+        UCSRB = (1<<TXEN);
+        UCSRC = (3<<UCSZ0);     // Async, no parity, 1 stop, 8 data
+        UBRRH = BAUD_RELOAD >> 8;
+        UBRRL = BAUD_RELOAD & 0xff;
+        _delay_ms(100);
+        outchar('\n');
+    }
+  #endif
     #define PUTCHAR_FUNC    outchar
     #define NO_DOUBLE_PRECISION
 #elif defined(TEST_STM8)
@@ -76,7 +100,7 @@ DEALINGS IN THE SOFTWARE.
   #ifdef BASIC_PRINTF_ONLY
     #define tsprintf(buf, format, args...)  printf_rom(PSTR(format), ## args)
   #else
-    #define tsprintf(buf, format, args...)  sprintf_rom(buf, PSTR(format), ## args)
+    #define tsprintf(buf, format, args...)  sprintf_rom(buf, PSTR(format), ## args); printf_rom(PSTR("%s"), buf)
   #endif
 #elif defined(TEST_STM8)
     /* In the STM8 test environment the macros only have to call our functions.
@@ -151,6 +175,11 @@ int main(int argc, char *argv[])
     double one = 1.0;
 #endif
 
+#if defined(TEST_AVR)
+    outinit();
+#endif
+
+    // Test sprintf function.
     tsprintf(buf, "Hello world %x %% %z\n", 0x123);
 
 // Integer output
@@ -207,11 +236,17 @@ int main(int argc, char *argv[])
 
 // String-in-flash output, only relevant to AVR.
 #if FEATURE(USE_FSTRING) && defined(TEST_AVR)
-    tprintf("Str [%s] [%S] [%8S] [%-8S]\n", S, PSTR(S), PSTR(S), PSTR(S));
+    tprintf("FStr [%s] [%S] [%8S] [%-8S]\n", S, PSTR(S), PSTR(S), PSTR(S));
 #endif
 
     (void) argc;    // Suppress compiler warning about unused arguments.
     (void) argv;
+
+#if defined(TEST_AVR)
+    // Never return from embedded test version.
+    for (;;) ;
+#endif
+
     return 0;
 }
 #endif  // ifdef SIZE
