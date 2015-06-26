@@ -29,6 +29,7 @@ DEALINGS IN THE SOFTWARE.
 ******************************************************************************/
 
 #if defined(TEST_AVR)
+    // 8-bit AVR tests
     #include "../src/printf.h"
     #include <avr/io.h>
     #include <avr/pgmspace.h>
@@ -37,16 +38,24 @@ DEALINGS IN THE SOFTWARE.
     #define PUTCHAR_FUNC    outchar
     #define NO_DOUBLE_PRECISION
 #elif defined(TEST_STM8)
+    // STM8 tests
     #include "../src/printf.h"
     void outchar(char c) { (void) c; }
     #define PUTCHAR_FUNC    outchar
     #define NO_DOUBLE_PRECISION
     #define NO_ISNAN_ISINF
 #else
+    // PC tests
     #include <stdio.h>
+    // The PC library version always produces 3-digit exponents.
+    // Force the same thing in our code to make comparison easier.
     #define EXP_3_DIGIT
 #endif
     #include "float.h"
+
+// The next section pulls in the real printf code.
+// Exclude this for the test version with no printf included.
+#if !(defined(SIZE) && defined(SIZEN))
 
 /* Force printf.c to rename the functions so we can use both
    the standard library and our own version for side-by-side tests.
@@ -70,6 +79,10 @@ DEALINGS IN THE SOFTWARE.
     #define tsprintf(buf, format, args...)  sprintf_rom(buf, PSTR(format), ## args)
   #endif
 #elif defined(TEST_STM8)
+    /* In the STM8 test environment the macros only have to call our functions.
+       The Raisonance compiler does not support the ## args extension so revert
+       to the less flexible __VA_ARGS__ instead.
+    */
     #define tprintf(...)                    printf_rom(__VA_ARGS__)
   #ifdef BASIC_PRINTF_ONLY
     #define tsprintf(buf, ...)              printf_rom(__VA_ARGS__)
@@ -86,10 +99,39 @@ DEALINGS IN THE SOFTWARE.
   #ifdef BASIC_PRINTF_ONLY
     #define tsprintf(buf, format, args...)  do { printf(format, ## args); printf_rom(format, ## args); } while(0)
   #else
-    #define tsprintf(buf, format, args...)  do { printf(format, ## args); sprintf_rom(buf, format, ## args); printf("%s", buf); } while(0)
+    #define tsprintf(buf, format, args...)  do { printf(format, ## args); sprintf_rom(buf, format, ## args); \
+                                                 printf("%s", buf); } while(0)
   #endif
 #endif
 
+#endif  // !(defined(SIZE) && defined(SIZEN))
+
+#ifdef SIZE
+/* This variant is used only to determine the compiled size.
+   It calls the printf function with an empty format string.
+   The SIZEN option builds the same output file but without
+   the printf function. By subtracting the two values we can
+   arrive at a compiled output size including any library
+   functions which are required.
+*/
+int main(int argc, char *argv[])
+{
+  #ifndef SIZEN
+    tprintf("");
+  #endif
+    (void) argc;    // Suppress compiler warning about unused arguments.
+    (void) argv;
+    return 0;
+}
+#else   // ifdef SIZE
+/* This variant is used to test the output with a variety of
+   different format strings and output types.
+   The PC version is used to check that the output of our printf
+   function matches the output of the standard library function.
+   The other versions are used to generate real embedded versions
+   so the output can be tested on a live system. The latter requires
+   a real output function to be provided.
+*/
 
 #define PI  3.14159265358979323844
 #define F6  123450.0
@@ -102,19 +144,18 @@ DEALINGS IN THE SOFTWARE.
 
 int main(int argc, char *argv[])
 {
-#ifdef SIZE
-    #ifndef SIZEN
-    tprintf("");
-    #endif
-#else
 #ifndef BASIC_PRINTF_ONLY
     char buf[32];
 #endif
 #if FEATURE(USE_FLOAT)
     double one = 1.0;
 #endif
+
     tsprintf(buf, "Hello world %x %% %z\n", 0x123);
+
+// Integer output
 #if FEATURE(USE_SPACE_PAD) || FEATURE(USE_ZERO_PAD)
+  // Tests for variants which include the padding options.
   #if FEATURE(USE_SIGNED)
     tprintf("Int %d %4d %04d %+04d % 4d %-4d. %+3d %+3d % 3d % 3d\n", N, N, N, N, N, N, 0, -1, 0, -1);
   #endif
@@ -137,6 +178,7 @@ int main(int argc, char *argv[])
     tprintf("Prec %.d %.2d %.2d %.2d %-5.3s %.3s.\n", 0, 1, 0, -1, S, S);
   #endif
 #else
+  // Simpler tests for variants with no padding options.
   #if FEATURE(USE_SIGNED)
     tprintf("Int %d %+d %+d % d % d\n", N, 0, -1, 0, -1);
   #endif
@@ -151,6 +193,8 @@ int main(int argc, char *argv[])
     tprintf("Prec %.d %.2d %.2d %.2d %.3s.\n", 0, 1, 0, -1, S);
   #endif
 #endif
+
+// Floating point output.
 #if FEATURE(USE_FLOAT)
     tprintf("pi = %f %e %g\n", PI, PI, PI);
     tprintf("f6dig = %.0f %e %g\n", F6, F6, F6);
@@ -160,11 +204,14 @@ int main(int argc, char *argv[])
     tprintf("Max/Min = %e %e\n", DBL_MAX, DBL_MIN);
     tprintf("NaN/Inf = %f %f\n", sqrt(-1), one / (one - 1.0));
 #endif
+
+// String-in-flash output, only relevant to AVR.
 #if FEATURE(USE_FSTRING) && defined(TEST_AVR)
     tprintf("Str [%s] [%S] [%8S] [%-8S]\n", S, PSTR(S), PSTR(S), PSTR(S));
 #endif
-#endif
+
     (void) argc;    // Suppress compiler warning about unused arguments.
     (void) argv;
     return 0;
 }
+#endif  // ifdef SIZE
