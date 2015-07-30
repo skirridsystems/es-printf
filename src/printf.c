@@ -110,6 +110,13 @@ static const double largetable[] = {
 #endif
     1e+32, 1e+16, 1e+8, 1e+4, 1e+2, 1e+1
 };
+#ifndef NO_DOUBLE_PRECISION
+    // Double precision numbers up to 10^308 require 16-bit exponents.
+    typedef signed short flt_width_t;
+#else
+    // Single precision numbers up to 10^38 require only 8-bit exponent
+    typedef signed char flt_width_t;
+#endif
 
 // Function to trim trailing zeros and DP in 'g' mode.
 // Return pointer to new string terminator position.
@@ -123,10 +130,10 @@ static char *trim_zeros(char *p)
     return p;
 }
 
-static char *format_float(double number, int ndigits, unsigned char flags, unsigned char fflags, char *buf)
+static char *format_float(double number, flt_width_t ndigits, unsigned char flags, unsigned char fflags, char *buf)
 {
-    int decpt;
-    int power10;
+    flt_width_t decpt;
+    flt_width_t power10;
     unsigned char i;
     char *p = buf + 2;
     char *pend;
