@@ -280,7 +280,11 @@ int main(int argc, char *argv[])
     tprintf("flarge = %f %e %g\n", FL, FL, FL);
     tprintf("fsmall = %f %e %g\n", FS, FS, FS);
     tprintf("%%g = %g %g %g %G\n", 1.23e-5, 1.23e-4, 1.23e5, 1.23e6);
+#ifdef NO_DOUBLE_PRECISION
+    tprintf("Max/Min = %e %e\n", FLT_MAX, FLT_MIN);
+#else
     tprintf("Max/Min = %e %e\n", DBL_MAX, DBL_MIN);
+#endif
     tprintf("NaN/Inf = %f %f\n", sqrt(-1), one / (one - 1.0));
     tprintf("whole = %.f %.e %.g\n", 27.0, 27.0, 27.0);
     tprintf("pi-p4 = %.4f %.4e %.4g\n", PI, PI, PI);
