@@ -389,7 +389,7 @@ static char *format_float(double number, int ndigits, unsigned char flags, unsig
     else
     {
         // Leave p pointing to start of digit string.
-        if (ndigits > 1)
+        if (ndigits > 1 || (flags & FL_SPECIAL))
         {
             // Decimal point is always after first digit.
             // Shift digit and insert point.
