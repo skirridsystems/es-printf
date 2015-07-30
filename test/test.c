@@ -74,6 +74,9 @@ DEALINGS IN THE SOFTWARE.
     // The PC library version always produces 3-digit exponents.
     // Force the same thing in our code to make comparison easier.
     #define EXP_3_DIGIT
+    // Redefine our printf output function.
+    static void testchar(char c);
+    #define PUTCHAR_FUNC    testchar
 #endif
     #include "float.h"
 
@@ -119,13 +122,20 @@ DEALINGS IN THE SOFTWARE.
     */
     #undef printf
     #undef sprintf
-    #define ORDER_STR                       "printf output is shown first, es-printf is second"
-    #define tprintf(format, args...)        do { printf(format, ## args); printf_rom(format, ## args); } while(0)
+    #define COMPARE_TEST
+    #define tprintf(format, args...)        do { sprintf(stdbuf, format, ## args);  \
+                                                 testinit();                        \
+                                                 printf_rom(format, ## args);       \
+                                                 testcompare(); } while(0)
   #ifdef BASIC_PRINTF_ONLY
-    #define tsprintf(buf, format, args...)  do { printf(format, ## args); printf_rom(format, ## args); } while(0)
+    #define tsprintf(buf, format, args...)  do { sprintf(stdbuf, format, ## args);  \
+                                                 testinit();                        \
+                                                 printf_rom(format, ## args);       \
+                                                 testcompare(); } while(0)
   #else
-    #define tsprintf(buf, format, args...)  do { printf(format, ## args); sprintf_rom(buf, format, ## args); \
-                                                 printf("%s", buf); } while(0)
+    #define tsprintf(buf, format, args...)  do { sprintf(stdbuf, format, ## args);  \
+                                                 sprintf_rom(testbuf, format, ## args); \
+                                                 testcompare(); } while(0)
   #endif
 #endif
 
@@ -167,6 +177,38 @@ int main(int argc, char *argv[])
 #define O   023
 #define S   "Abcde"
 
+#ifdef COMPARE_TEST
+static char stdbuf[80];
+static char testbuf[80];
+static int testindex;
+
+void testinit(void)
+{
+    testindex = 0;
+    testbuf[0] = '\0';
+}
+void testchar(char c)
+{
+    if (testindex < sizeof(testbuf)-1)
+    {
+        testbuf[testindex++] = c;
+        testbuf[testindex] = '\0';
+    }
+}
+void testcompare(void)
+{
+    if (strcmp(stdbuf, testbuf) == 0)
+    {
+        printf("     %s", stdbuf);
+    }
+    else
+    {
+        printf("Std  %s", stdbuf);
+        printf("Test %s", testbuf);
+    }
+}
+#endif
+
 int main(int argc, char *argv[])
 {
 #ifndef BASIC_PRINTF_ONLY
@@ -180,9 +222,11 @@ int main(int argc, char *argv[])
     outinit();
 #endif
 
-#ifdef ORDER_STR
+#ifdef COMPARE_TEST
     // Show the output order
-    printf("%s\n", ORDER_STR);
+    printf("Output is compared to the standard printf output.\n");
+    printf("For matching results only one line is shown.\n");
+    printf("If there is a difference, both are shown.\n");
 #endif
 
     // Test sprintf function.
