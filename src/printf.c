@@ -383,12 +383,25 @@ static char *format_float(double number, int ndigits, unsigned char flags, unsig
             // DP at end is not required.
             --pend;
         }
+        // Leave p pointing to start of digit string.
+        p = buf + 1;
     }
     else
     {
-        // Decimal point is always after first digit.
-        buf[1] = buf[2];
-        buf[2] = '.';
+        // Leave p pointing to start of digit string.
+        if (ndigits > 1)
+        {
+            // Decimal point is always after first digit.
+            // Shift digit and insert point.
+            buf[1] = buf[2];
+            buf[2] = '.';
+            p = buf + 1;
+        }
+        else
+        {
+            // No decimal point needed.
+            p = buf + 2;
+        }
         // Trim trailing 0's in 'g' mode.
         if ((fflags & FF_GCVT) && !(flags & FL_SPECIAL))
         {
@@ -418,7 +431,6 @@ static char *format_float(double number, int ndigits, unsigned char flags, unsig
         *pend++ = decpt % 10 + '0';
     }
     // Add the sign prefix.
-    p = buf + 1;
     if      (flags & FL_NEG)    *--p = '-';
 #if FEATURE(USE_PLUS_SIGN)
     else if (flags & FL_PLUS)   *--p = '+';
