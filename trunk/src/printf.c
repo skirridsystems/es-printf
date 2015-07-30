@@ -290,7 +290,7 @@ static char *format_float(double number, flt_width_t ndigits, unsigned char flag
         if (decpt < 1)
         {
             // Number of leading zeros
-            int nzero = 1 - decpt;
+            flt_width_t nzero = 1 - decpt;
             // Ensure pointer is not past end of buffer
             if (nzero > BUFMAX-3)
                 nzero = BUFMAX-3;
@@ -316,6 +316,7 @@ static char *format_float(double number, flt_width_t ndigits, unsigned char flag
         }
         else
         {
+            // number is normalised to a positive value between 0 and 9.
             int n = number;
             *p++ = n + '0';
             number = (number - n) * 10;
@@ -362,7 +363,7 @@ static char *format_float(double number, flt_width_t ndigits, unsigned char flag
     // Insert the decimal point
     if (fflags & FF_FCVT)
     {
-        int num;
+        flt_width_t num;
         num = (decpt > 1) ? decpt : 1;
         p = buf + 1;
         for (i = 0; i < num; i++)
