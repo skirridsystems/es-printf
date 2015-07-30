@@ -293,6 +293,9 @@ int main(int argc, char *argv[])
     tprintf("zero = %f %e %g\n", 0.0, 0.0, 0.0);
     tprintf("zero-p0 = %.f %.e %.g\n", 0.0, 0.0, 0.0);
     tprintf("zero-p1 = %.1f %.1e %.1g\n", 0.0, 0.0, 0.0);
+    tprintf("pad = %8.4f %12.2e %8.4g\n", PI, PI, PI);
+    tprintf("just = %-8.4f %-12.2e %-8.4g\n", PI, PI, PI);
+    tprintf("Lead = %.26f\n", 7e-30);
 #endif
 
 // String-in-flash output, only relevant to AVR.
