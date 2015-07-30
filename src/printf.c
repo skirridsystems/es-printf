@@ -65,11 +65,6 @@ DEALINGS IN THE SOFTWARE.
     #define BUFMAX  16
 #endif
 
-// Precision is required for floating point support
-#if FEATURE(USE_FLOAT) && !FEATURE(USE_PRECISION)
-    #error USE_PRECISION required with USE_FLOAT
-#endif
-
 // Bits in the flags variable
 #if FEATURE(USE_LEFT_JUST)
   #define FL_LEFT_JUST  (1<<0)
@@ -491,7 +486,7 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
     width_t width;
     width_t fwidth;
 #endif
-#if FEATURE(USE_PRECISION)
+#if FEATURE(USE_PRECISION) || FEATURE(USE_FLOAT)
     width_t precision;
 #else
     #define precision -1
@@ -517,7 +512,7 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
         if (convert == '%')
         {
             p = buffer + BUFMAX;
-#if FEATURE(USE_PRECISION)
+#if FEATURE(USE_PRECISION) || FEATURE(USE_FLOAT)
             precision = -1;
 #endif
 #if FEATURE(USE_SPACE_PAD) || FEATURE(USE_ZERO_PAD)
