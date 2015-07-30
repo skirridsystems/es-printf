@@ -83,6 +83,7 @@ DEALINGS IN THE SOFTWARE.
 #define FF_UCASE        (1<<0)
 #define FF_FCVT         (1<<1)
 #define FF_GCVT         (1<<2)
+#define FF_NRND         (1<<3)
 
 // Most compilers can support double precision
 #ifndef NO_DOUBLE_PRECISION
@@ -118,6 +119,13 @@ static const double largetable[] = {
     typedef signed char flt_width_t;
 #endif
 
+// These define the maximum number of digits that can be output into the buffer.
+// %f requires space for sign, point and rounding digit.
+#define DIGITS_MAX_F    (BUFMAX-3)
+// %e requires space for sign, point and up to 3 digit exponent (E+123).
+// Rounding happens in the place where the exponent will go.
+#define DIGITS_MAX_E    (BUFMAX-7)
+
 // Function to trim trailing zeros and DP in 'g' mode.
 // Return pointer to new string terminator position.
 static char *trim_zeros(char *p)
@@ -134,6 +142,7 @@ static char *format_float(double number, flt_width_t ndigits, unsigned char flag
 {
     flt_width_t decpt;
     flt_width_t power10;
+    flt_width_t nzero;
     unsigned char i;
     char *p = buf + 2;
     char *pend;
@@ -265,7 +274,6 @@ static char *format_float(double number, flt_width_t ndigits, unsigned char flag
             if (ndigits < 0)
             {
                 decpt -= ndigits;
-                ndigits = 0;
             }
         }
         /* For 'f' conversions with positive DP value that would overflow
@@ -275,34 +283,43 @@ static char *format_float(double number, flt_width_t ndigits, unsigned char flag
          * and the rounding digit may be included in the case of maximum
          * overflow.
          */
-        if (decpt > BUFMAX-3)
+        if (decpt > DIGITS_MAX_F)
         {
             fflags &= ~FF_FCVT;
         }
     }
 
+    nzero = 0;
     if (fflags & FF_FCVT)
     {
-        // Allow space for sign, point and rounding digit.
-        if (ndigits > BUFMAX-3)
-            ndigits = BUFMAX-3;
-        // Start placing digits after leading 0's
         if (decpt < 1)
         {
-            // Number of leading zeros
-            flt_width_t nzero = 1 - decpt;
-            // Ensure pointer is not past end of buffer
-            if (nzero > BUFMAX-3)
-                nzero = BUFMAX-3;
-            p += nzero;
+            // Values < 1 require leading zeros before the real digits.
+            nzero = 1 - decpt;
         }
+        // Check for buffer fit. Zeros take precedence.
+        if (nzero > DIGITS_MAX_F)
+        {
+            nzero = DIGITS_MAX_F;
+            ndigits = -1;
+        }
+        if (ndigits < 0)
+        {
+            // First significant digit is below rounding range.
+            fflags |= FF_NRND;
+            ndigits = 0;
+        }
+        else if (ndigits + nzero > DIGITS_MAX_F)
+        {
+            ndigits = DIGITS_MAX_F - nzero;
+        }
+        p += nzero;
     }
     else
     {
-        // Allow space for sign, point and up to 3 digit exponent (E+123).
-        // Rounding happens in the place where the exponent will go.
-        if (ndigits > BUFMAX-7)
-            ndigits = BUFMAX-7;
+        // Allow space for sign, point exponent.
+        if (ndigits > DIGITS_MAX_E)
+            ndigits = DIGITS_MAX_E;
     }
     
     // Format digits one-by-one into the output string.
@@ -330,7 +347,7 @@ static char *format_float(double number, flt_width_t ndigits, unsigned char flag
     {
         p -= (i - FLOAT_DIGITS);
     }
-    if (*p >= '5')
+    if (!(fflags & FF_NRND) && *p >= '5')
     {
         for (;;)
         {
