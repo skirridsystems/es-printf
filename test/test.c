@@ -119,6 +119,7 @@ DEALINGS IN THE SOFTWARE.
     */
     #undef printf
     #undef sprintf
+    #define ORDER_STR                       "printf output is shown first, es-printf is second"
     #define tprintf(format, args...)        do { printf(format, ## args); printf_rom(format, ## args); } while(0)
   #ifdef BASIC_PRINTF_ONLY
     #define tsprintf(buf, format, args...)  do { printf(format, ## args); printf_rom(format, ## args); } while(0)
@@ -179,6 +180,11 @@ int main(int argc, char *argv[])
     outinit();
 #endif
 
+#ifdef ORDER_STR
+    // Show the output order
+    printf("%s\n", ORDER_STR);
+#endif
+
     // Test sprintf function.
     tsprintf(buf, "Hello world %x %% %z\n", 0x123);
 
@@ -232,6 +238,13 @@ int main(int argc, char *argv[])
     tprintf("%%g = %g %g %g %G\n", 1.23e-5, 1.23e-4, 1.23e5, 1.23e6);
     tprintf("Max/Min = %e %e\n", DBL_MAX, DBL_MIN);
     tprintf("NaN/Inf = %f %f\n", sqrt(-1), one / (one - 1.0));
+    tprintf("whole = %.f %.e %.g\n", 27.0, 27.0, 27.0);
+    tprintf("pi-p4 = %.4f %.4e %.4g\n", PI, PI, PI);
+    tprintf("one-p0 = %.f %.e %.g\n", 1.0, 1.0, 1.0);
+    tprintf("one#-p0 = %#.f %#.e %#.g\n", 1.0, 1.0, 1.0);
+    tprintf("zero = %f %e %g\n", 0.0, 0.0, 0.0);
+    tprintf("zero-p0 = %.f %.e %.g\n", 0.0, 0.0, 0.0);
+    tprintf("zero-p1 = %.1f %.1e %.1g\n", 0.0, 0.0, 0.0);
 #endif
 
 // String-in-flash output, only relevant to AVR.
