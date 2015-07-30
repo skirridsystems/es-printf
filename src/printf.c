@@ -163,9 +163,18 @@ static char *format_float(double number, int ndigits, unsigned char flags, unsig
         flags |= FL_NEG;
     }
 
-    // Digits printed cannot be negative.
-    if (ndigits < 0)
-        ndigits = 0;
+    if (fflags & FF_FCVT)
+    {
+        // Number of DP cannot be negative.
+        if (ndigits < 0)
+            ndigits = 0;
+    }
+    else
+    {
+        // Significant digits must be at least 1.
+        if (ndigits < 1)
+            ndigits = 1;
+    }
 
     // Prefill buffer with zeros.
     for (i = 0; i < BUFMAX; i++)
@@ -175,7 +184,6 @@ static char *format_float(double number, int ndigits, unsigned char flags, unsig
     {
         // Special case to correct number of decimals, significant figures,
         // and avoid printing 0E-00.
-        ndigits++;
         decpt = 1;
     }
     else
