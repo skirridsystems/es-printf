@@ -138,7 +138,8 @@ static char *trim_zeros(char *p)
     return p;
 }
 
-static char *format_float(double number, flt_width_t ndigits, unsigned char flags, unsigned char fflags, char *buf)
+static char *format_float(double number, flt_width_t ndigits, flt_width_t width,
+                          unsigned char flags, unsigned char fflags, char *buf)
 {
     flt_width_t decpt;
     flt_width_t power10;
@@ -458,8 +459,43 @@ static char *format_float(double number, flt_width_t ndigits, unsigned char flag
 #if FEATURE(USE_SPACE_SIGN)
     else if (flags & FL_SPACE)  *--p = ' ';
 #endif
-    
+
     *pend = '\0';   // Add null terminator
+    
+#if FEATURE(USE_ZERO_PAD)
+    if (flags & FL_ZERO_PAD)
+    {
+        /* Implement leading zero padding by shifting the formatted buffer.
+         * This is not the most efficient but at any other point it is hard
+         * to know what the exact buffer length will be. The processing time
+         * pales into insignificance next to the floating point operations.
+         */
+        flt_width_t fwidth = pend - p;
+        if (width > BUFMAX)
+            width = BUFMAX;
+        if (fwidth < width)
+        {
+            // Set pointer to location after the new end point.
+            // It will be predecremented.
+            char *pnew = pend + width - fwidth + 1;
+            ++pend;
+            // Do not shift the sign/space if used.
+            if (flags & (FL_NEG | FL_PLUS | FL_SPACE))
+                ++p;
+            // p now points to the last character to move.
+            // Shift the buffer rightwards
+            do *--pnew = *--pend;
+            while (pend != p);
+            // Fill the remainder with 0s.
+            do *--pnew = '0';
+            while (pnew != p);
+            // Restore the former value of p.
+            if (flags & (FL_NEG | FL_PLUS | FL_SPACE))
+                --p;
+        }
+    }
+#endif
+
     return p;       // Start of string
 }
 #endif
@@ -507,7 +543,7 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
 #if !HEX_CONVERT_ONLY
     unsigned base;
 #endif
-#if FEATURE(USE_SPACE_PAD) || FEATURE(USE_ZERO_PAD)
+#if FEATURE(USE_SPACE_PAD) || FEATURE(USE_ZERO_PAD) || FEATURE(USE_FLOAT)
     width_t width;
     width_t fwidth;
 #endif
@@ -837,7 +873,7 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                 if (precision == -1) precision = 6;
                 fvalue = va_arg(ap, double);
                 fflags = FF_FCVT;
-                p = format_float(fvalue, precision, flags, fflags, buffer);
+                p = format_float(fvalue, precision, width, flags, fflags, buffer);
                 // Precision is not used to limit number output.
                 precision = -1;
                 break;
@@ -847,7 +883,7 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                 // Set default precision
                 if (precision == -1) precision = 6;
                 fvalue = va_arg(ap, double);
-                p = format_float(fvalue, precision + 1, flags, fflags, buffer);
+                p = format_float(fvalue, precision + 1, width, flags, fflags, buffer);
                 // Precision is not used to limit number output.
                 precision = -1;
                 break;
@@ -858,7 +894,7 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                 // Set default precision
                 if (precision == -1) precision = 6;
                 fvalue = va_arg(ap, double);
-                p = format_float(fvalue, precision, flags, fflags, buffer);
+                p = format_float(fvalue, precision, width, flags, fflags, buffer);
                 // Precision is not used to limit number output.
                 precision = -1;
                 break;

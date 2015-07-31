@@ -293,9 +293,15 @@ int main(int argc, char *argv[])
     tprintf("zero = %f %e %g\n", 0.0, 0.0, 0.0);
     tprintf("zero-p0 = %.f %.e %.g\n", 0.0, 0.0, 0.0);
     tprintf("zero-p1 = %.1f %.1e %.1g\n", 0.0, 0.0, 0.0);
+#if FEATURE(USE_SPACE_PAD)
     tprintf("pad = %8.4f %12.2e %8.4g\n", PI, PI, PI);
     tprintf("just = %-8.4f %-12.2e %-8.4g\n", PI, PI, PI);
+#endif
     tprintf("Lead = %.26f\n", 7e-30);
+#if FEATURE(USE_ZERO_PAD)
+    tprintf("zpad = %+09.4f %+012.2e %+09.4g\n", PI, PI, PI);
+    tprintf("zmax = %+030.4f\n", PI);
+#endif
 #endif
 
 // String-in-flash output, only relevant to AVR.
