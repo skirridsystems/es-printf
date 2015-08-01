@@ -1,0 +1,21 @@
+Changelog for es-printf
+-----------------------
+
+This is just a summary of the main changes in each released version.
+For detailed changes please check version history in the repository.
+
+Version 1.1 - 01 Aug 2015
+* Fixed several formatting bugs in floating point.
+* Added support for leading zeros in floating point output.
+* Added more test cases.
+* Improved test program highlights any differences from the standard printf.
+
+Version 1.0 - 26 Jun 2015
+First public release on Sourceforge. Code previously residing on googlecode
+had never been formally released.
+
+The original basic integer version had been in use for over 10 years when
+es-printf was started. It lacked many formatting options and floating point
+support, and it was not configurable. es-printf was developed to offer
+the full functionality of the standard printf function, but with full
+configurability, optimisation for small micros, and thread-safe operation.
