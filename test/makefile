@@ -89,9 +89,6 @@ $(SOUTN)/%.o : %.c makefile $(PRINTF_INC)
 
 all: $(TRG).exe $(TRG).hex $(SOUT)/$(STRG).elf $(SOUTN)/$(STRGN).elf
 
-test: $(TRG).exe
-	./$(TRG).exe
-
 # Make sure the output directory exists
 $(OBJ): | $(OUT)
 $(SOBJ): | $(SOUT)

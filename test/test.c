@@ -74,9 +74,6 @@ DEALINGS IN THE SOFTWARE.
     // The PC library version always produces 3-digit exponents.
     // Force the same thing in our code to make comparison easier.
     #define EXP_3_DIGIT
-    // Redefine our printf output function.
-    static void testchar(char c);
-    #define PUTCHAR_FUNC    testchar
 #endif
     #include "float.h"
 
@@ -122,20 +119,12 @@ DEALINGS IN THE SOFTWARE.
     */
     #undef printf
     #undef sprintf
-    #define COMPARE_TEST
-    #define tprintf(format, args...)        do { sprintf(stdbuf, format, ## args);  \
-                                                 testinit();                        \
-                                                 printf_rom(format, ## args);       \
-                                                 testcompare(); } while(0)
+    #define tprintf(format, args...)        do { printf(format, ## args); printf_rom(format, ## args); } while(0)
   #ifdef BASIC_PRINTF_ONLY
-    #define tsprintf(buf, format, args...)  do { sprintf(stdbuf, format, ## args);  \
-                                                 testinit();                        \
-                                                 printf_rom(format, ## args);       \
-                                                 testcompare(); } while(0)
+    #define tsprintf(buf, format, args...)  do { printf(format, ## args); printf_rom(format, ## args); } while(0)
   #else
-    #define tsprintf(buf, format, args...)  do { sprintf(stdbuf, format, ## args);  \
-                                                 sprintf_rom(testbuf, format, ## args); \
-                                                 testcompare(); } while(0)
+    #define tsprintf(buf, format, args...)  do { printf(format, ## args); sprintf_rom(buf, format, ## args); \
+                                                 printf("%s", buf); } while(0)
   #endif
 #endif
 
@@ -177,38 +166,6 @@ int main(int argc, char *argv[])
 #define O   023
 #define S   "Abcde"
 
-#ifdef COMPARE_TEST
-static char stdbuf[80];
-static char testbuf[80];
-static int testindex;
-
-void testinit(void)
-{
-    testindex = 0;
-    testbuf[0] = '\0';
-}
-void testchar(char c)
-{
-    if (testindex < sizeof(testbuf)-1)
-    {
-        testbuf[testindex++] = c;
-        testbuf[testindex] = '\0';
-    }
-}
-void testcompare(void)
-{
-    if (strcmp(stdbuf, testbuf) == 0)
-    {
-        printf("     %s", stdbuf);
-    }
-    else
-    {
-        printf("Std  %s", stdbuf);
-        printf("Test %s", testbuf);
-    }
-}
-#endif
-
 int main(int argc, char *argv[])
 {
 #ifndef BASIC_PRINTF_ONLY
@@ -220,13 +177,6 @@ int main(int argc, char *argv[])
 
 #if defined(TEST_AVR)
     outinit();
-#endif
-
-#ifdef COMPARE_TEST
-    // Show the output order
-    printf("Output is compared to the standard printf output.\n");
-    printf("For matching results only one line is shown.\n");
-    printf("If there is a difference, both are shown.\n");
 #endif
 
     // Test sprintf function.
@@ -280,28 +230,8 @@ int main(int argc, char *argv[])
     tprintf("flarge = %f %e %g\n", FL, FL, FL);
     tprintf("fsmall = %f %e %g\n", FS, FS, FS);
     tprintf("%%g = %g %g %g %G\n", 1.23e-5, 1.23e-4, 1.23e5, 1.23e6);
-#ifdef NO_DOUBLE_PRECISION
-    tprintf("Max/Min = %e %e\n", FLT_MAX, FLT_MIN);
-#else
     tprintf("Max/Min = %e %e\n", DBL_MAX, DBL_MIN);
-#endif
     tprintf("NaN/Inf = %f %f\n", sqrt(-1), one / (one - 1.0));
-    tprintf("whole = %.f %.e %.g\n", 27.0, 27.0, 27.0);
-    tprintf("pi-p4 = %.4f %.4e %.4g\n", PI, PI, PI);
-    tprintf("one-p0 = %.f %.e %.g\n", 1.0, 1.0, 1.0);
-    tprintf("one#-p0 = %#.f %#.e %#.g\n", 1.0, 1.0, 1.0);
-    tprintf("zero = %f %e %g\n", 0.0, 0.0, 0.0);
-    tprintf("zero-p0 = %.f %.e %.g\n", 0.0, 0.0, 0.0);
-    tprintf("zero-p1 = %.1f %.1e %.1g\n", 0.0, 0.0, 0.0);
-#if FEATURE(USE_SPACE_PAD)
-    tprintf("pad = %8.4f %12.2e %8.4g\n", PI, PI, PI);
-    tprintf("just = %-8.4f %-12.2e %-8.4g\n", PI, PI, PI);
-#endif
-    tprintf("Lead = %.26f\n", 7e-30);
-#if FEATURE(USE_ZERO_PAD)
-    tprintf("zpad = %+09.4f %+012.2e %+09.4g\n", PI, PI, PI);
-    tprintf("zmax = %+030.4f\n", PI);
-#endif
 #endif
 
 // String-in-flash output, only relevant to AVR.

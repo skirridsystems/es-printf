@@ -65,6 +65,11 @@ DEALINGS IN THE SOFTWARE.
     #define BUFMAX  16
 #endif
 
+// Precision is required for floating point support
+#if FEATURE(USE_FLOAT) && !FEATURE(USE_PRECISION)
+    #error USE_PRECISION required with USE_FLOAT
+#endif
+
 // Bits in the flags variable
 #if FEATURE(USE_LEFT_JUST)
   #define FL_LEFT_JUST  (1<<0)
@@ -83,7 +88,6 @@ DEALINGS IN THE SOFTWARE.
 #define FF_UCASE        (1<<0)
 #define FF_FCVT         (1<<1)
 #define FF_GCVT         (1<<2)
-#define FF_NRND         (1<<3)
 
 // Most compilers can support double precision
 #ifndef NO_DOUBLE_PRECISION
@@ -111,20 +115,6 @@ static const double largetable[] = {
 #endif
     1e+32, 1e+16, 1e+8, 1e+4, 1e+2, 1e+1
 };
-#ifndef NO_DOUBLE_PRECISION
-    // Double precision numbers up to 10^308 require 16-bit exponents.
-    typedef signed short flt_width_t;
-#else
-    // Single precision numbers up to 10^38 require only 8-bit exponent
-    typedef signed char flt_width_t;
-#endif
-
-// These define the maximum number of digits that can be output into the buffer.
-// %f requires space for sign, point and rounding digit.
-#define DIGITS_MAX_F    (BUFMAX-3)
-// %e requires space for sign, point and up to 3 digit exponent (E+123).
-// Rounding happens in the place where the exponent will go.
-#define DIGITS_MAX_E    (BUFMAX-7)
 
 // Function to trim trailing zeros and DP in 'g' mode.
 // Return pointer to new string terminator position.
@@ -138,12 +128,10 @@ static char *trim_zeros(char *p)
     return p;
 }
 
-static char *format_float(double number, flt_width_t ndigits, flt_width_t width,
-                          unsigned char flags, unsigned char fflags, char *buf)
+static char *format_float(double number, int ndigits, unsigned char flags, unsigned char fflags, char *buf)
 {
-    flt_width_t decpt;
-    flt_width_t power10;
-    flt_width_t nzero;
+    int decpt;
+    int power10;
     unsigned char i;
     char *p = buf + 2;
     char *pend;
@@ -175,18 +163,9 @@ static char *format_float(double number, flt_width_t ndigits, flt_width_t width,
         flags |= FL_NEG;
     }
 
-    if (fflags & FF_FCVT)
-    {
-        // Number of DP cannot be negative.
-        if (ndigits < 0)
-            ndigits = 0;
-    }
-    else
-    {
-        // Significant digits must be at least 1.
-        if (ndigits < 1)
-            ndigits = 1;
-    }
+    // Digits printed cannot be negative.
+    if (ndigits < 0)
+        ndigits = 0;
 
     // Prefill buffer with zeros.
     for (i = 0; i < BUFMAX; i++)
@@ -196,6 +175,7 @@ static char *format_float(double number, flt_width_t ndigits, flt_width_t width,
     {
         // Special case to correct number of decimals, significant figures,
         // and avoid printing 0E-00.
+        ndigits++;
         decpt = 1;
     }
     else
@@ -275,6 +255,7 @@ static char *format_float(double number, flt_width_t ndigits, flt_width_t width,
             if (ndigits < 0)
             {
                 decpt -= ndigits;
+                ndigits = 0;
             }
         }
         /* For 'f' conversions with positive DP value that would overflow
@@ -284,43 +265,34 @@ static char *format_float(double number, flt_width_t ndigits, flt_width_t width,
          * and the rounding digit may be included in the case of maximum
          * overflow.
          */
-        if (decpt > DIGITS_MAX_F)
+        if (decpt > BUFMAX-3)
         {
             fflags &= ~FF_FCVT;
         }
     }
 
-    nzero = 0;
     if (fflags & FF_FCVT)
     {
+        // Allow space for sign, point and rounding digit.
+        if (ndigits > BUFMAX-3)
+            ndigits = BUFMAX-3;
+        // Start placing digits after leading 0's
         if (decpt < 1)
         {
-            // Values < 1 require leading zeros before the real digits.
-            nzero = 1 - decpt;
+            // Number of leading zeros
+            int nzero = 1 - decpt;
+            // Ensure pointer is not past end of buffer
+            if (nzero > BUFMAX-3)
+                nzero = BUFMAX-3;
+            p += nzero;
         }
-        // Check for buffer fit. Zeros take precedence.
-        if (nzero > DIGITS_MAX_F)
-        {
-            nzero = DIGITS_MAX_F;
-            ndigits = -1;
-        }
-        if (ndigits < 0)
-        {
-            // First significant digit is below rounding range.
-            fflags |= FF_NRND;
-            ndigits = 0;
-        }
-        else if (ndigits + nzero > DIGITS_MAX_F)
-        {
-            ndigits = DIGITS_MAX_F - nzero;
-        }
-        p += nzero;
     }
     else
     {
-        // Allow space for sign, point exponent.
-        if (ndigits > DIGITS_MAX_E)
-            ndigits = DIGITS_MAX_E;
+        // Allow space for sign, point and up to 3 digit exponent (E+123).
+        // Rounding happens in the place where the exponent will go.
+        if (ndigits > BUFMAX-7)
+            ndigits = BUFMAX-7;
     }
     
     // Format digits one-by-one into the output string.
@@ -334,7 +306,6 @@ static char *format_float(double number, flt_width_t ndigits, flt_width_t width,
         }
         else
         {
-            // number is normalised to a positive value between 0 and 9.
             int n = number;
             *p++ = n + '0';
             number = (number - n) * 10;
@@ -348,7 +319,7 @@ static char *format_float(double number, flt_width_t ndigits, flt_width_t width,
     {
         p -= (i - FLOAT_DIGITS);
     }
-    if (!(fflags & FF_NRND) && *p >= '5')
+    if (*p >= '5')
     {
         for (;;)
         {
@@ -381,7 +352,7 @@ static char *format_float(double number, flt_width_t ndigits, flt_width_t width,
     // Insert the decimal point
     if (fflags & FF_FCVT)
     {
-        flt_width_t num;
+        int num;
         num = (decpt > 1) ? decpt : 1;
         p = buf + 1;
         for (i = 0; i < num; i++)
@@ -404,25 +375,12 @@ static char *format_float(double number, flt_width_t ndigits, flt_width_t width,
             // DP at end is not required.
             --pend;
         }
-        // Leave p pointing to start of digit string.
-        p = buf + 1;
     }
     else
     {
-        // Leave p pointing to start of digit string.
-        if (ndigits > 1 || (flags & FL_SPECIAL))
-        {
-            // Decimal point is always after first digit.
-            // Shift digit and insert point.
-            buf[1] = buf[2];
-            buf[2] = '.';
-            p = buf + 1;
-        }
-        else
-        {
-            // No decimal point needed.
-            p = buf + 2;
-        }
+        // Decimal point is always after first digit.
+        buf[1] = buf[2];
+        buf[2] = '.';
         // Trim trailing 0's in 'g' mode.
         if ((fflags & FF_GCVT) && !(flags & FL_SPECIAL))
         {
@@ -452,6 +410,7 @@ static char *format_float(double number, flt_width_t ndigits, flt_width_t width,
         *pend++ = decpt % 10 + '0';
     }
     // Add the sign prefix.
+    p = buf + 1;
     if      (flags & FL_NEG)    *--p = '-';
 #if FEATURE(USE_PLUS_SIGN)
     else if (flags & FL_PLUS)   *--p = '+';
@@ -459,43 +418,8 @@ static char *format_float(double number, flt_width_t ndigits, flt_width_t width,
 #if FEATURE(USE_SPACE_SIGN)
     else if (flags & FL_SPACE)  *--p = ' ';
 #endif
-
-    *pend = '\0';   // Add null terminator
     
-#if FEATURE(USE_ZERO_PAD)
-    if (flags & FL_ZERO_PAD)
-    {
-        /* Implement leading zero padding by shifting the formatted buffer.
-         * This is not the most efficient but at any other point it is hard
-         * to know what the exact buffer length will be. The processing time
-         * pales into insignificance next to the floating point operations.
-         */
-        flt_width_t fwidth = pend - p;
-        if (width > BUFMAX)
-            width = BUFMAX;
-        if (fwidth < width)
-        {
-            // Set pointer to location after the new end point.
-            // It will be predecremented.
-            char *pnew = pend + width - fwidth + 1;
-            ++pend;
-            // Do not shift the sign/space if used.
-            if (flags & (FL_NEG | FL_PLUS | FL_SPACE))
-                ++p;
-            // p now points to the last character to move.
-            // Shift the buffer rightwards
-            do *--pnew = *--pend;
-            while (pend != p);
-            // Fill the remainder with 0s.
-            do *--pnew = '0';
-            while (pnew != p);
-            // Restore the former value of p.
-            if (flags & (FL_NEG | FL_PLUS | FL_SPACE))
-                --p;
-        }
-    }
-#endif
-
+    *pend = '\0';   // Add null terminator
     return p;       // Start of string
 }
 #endif
@@ -543,11 +467,11 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
 #if !HEX_CONVERT_ONLY
     unsigned base;
 #endif
-#if FEATURE(USE_SPACE_PAD) || FEATURE(USE_ZERO_PAD) || FEATURE(USE_FLOAT)
+#if FEATURE(USE_SPACE_PAD) || FEATURE(USE_ZERO_PAD)
     width_t width;
     width_t fwidth;
 #endif
-#if FEATURE(USE_PRECISION) || FEATURE(USE_FLOAT)
+#if FEATURE(USE_PRECISION)
     width_t precision;
 #else
     #define precision -1
@@ -573,7 +497,7 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
         if (convert == '%')
         {
             p = buffer + BUFMAX;
-#if FEATURE(USE_PRECISION) || FEATURE(USE_FLOAT)
+#if FEATURE(USE_PRECISION)
             precision = -1;
 #endif
 #if FEATURE(USE_SPACE_PAD) || FEATURE(USE_ZERO_PAD)
@@ -873,7 +797,7 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                 if (precision == -1) precision = 6;
                 fvalue = va_arg(ap, double);
                 fflags = FF_FCVT;
-                p = format_float(fvalue, precision, width, flags, fflags, buffer);
+                p = format_float(fvalue, precision, flags, fflags, buffer);
                 // Precision is not used to limit number output.
                 precision = -1;
                 break;
@@ -883,7 +807,7 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                 // Set default precision
                 if (precision == -1) precision = 6;
                 fvalue = va_arg(ap, double);
-                p = format_float(fvalue, precision + 1, width, flags, fflags, buffer);
+                p = format_float(fvalue, precision + 1, flags, fflags, buffer);
                 // Precision is not used to limit number output.
                 precision = -1;
                 break;
@@ -894,7 +818,7 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                 // Set default precision
                 if (precision == -1) precision = 6;
                 fvalue = va_arg(ap, double);
-                p = format_float(fvalue, precision, width, flags, fflags, buffer);
+                p = format_float(fvalue, precision, flags, fflags, buffer);
                 // Precision is not used to limit number output.
                 precision = -1;
                 break;
