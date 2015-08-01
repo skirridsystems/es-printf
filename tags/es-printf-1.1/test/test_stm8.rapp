@@ -1,0 +1,46 @@
+
+<ApplicationBuild Header="test_stm8" Extern=".\test_stm8.rapp" Path=".\test_stm8.rapp" OutputFile=".\STM8_out\test_stm8.aof" sate="98" >
+	<NodeC Path=".\test.c" Header="test.c" Marker="-1" OutputFile=".\STM8_out\test.obj" sate="0" />
+	<Options>
+		<Config Header="Standard" >
+			<Set Header="ApplicationBuild" >
+				<Section Header="General" >
+					<Property Header="TargetFamily" Value="ST7" />
+																
+				</Section>
+				<Section Header="Directories" >
+					<Property Header="OutDir" Value="$(ApplicationDir)\STM8_out" Removable="1" />
+					<Property Header="ListDir" Value="$(ApplicationDir)\STM8_out" Removable="1" />
+							
+				</Section>
+					
+			</Set>
+			<Set Header="Target" >
+				<Section Header="ProcessorST7" >
+					<Property Header="Processor" Value="STM8L151K4" Removable="1" />
+																
+				</Section>
+				<Section Header="ToolSetST7" >
+					<Property Header="BuildToolSetST7" Value="ST7\RaisonanceTools.config" Removable="1" />
+					<Property Header="ArelocInfo" Value="" Removable="1" />
+							
+				</Section>
+					
+			</Set>
+			<Set Header="RCST7" >
+				<Section Header="Defines" >
+					<Property Header="Defines" Value="TEST_STM8;SIZE" Removable="1" />
+							
+				</Section>
+					
+			</Set>
+			<Set Header="RLST7" >
+				<Section Header="Output" >
+					<Property Header="ExtendedBin" Value="" Removable="1" />
+							
+				</Section>
+					
+			</Set>
+		</Config>
+	</Options>
+</ApplicationBuild>
