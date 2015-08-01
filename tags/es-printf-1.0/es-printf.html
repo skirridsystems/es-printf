@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>es-printf :: Documentation</title>
+    <style type="text/css">
+    body { background: #003366; color:#404040; font:76% Verdana,Tahoma,Arial,sans-serif; margin:0 auto; padding:0;}
+    #wrap {background:#fff; color:#404040; margin:0 auto; margin-top:10px; margin-bottom:10px; padding:10px; width:850px;}
+    #content {line-height:1.3em; margin:20px 50px 5px; padding:0 10px;}
+
+    /* Basic tags */
+    a {background-color:inherit; color:#286ea0; font-weight:700; text-decoration:none;}
+    a:hover {background-color:inherit; color:#286ea0; text-decoration:underline;}
+    p {margin:0 0 0.8em;}
+    h1 {font-size:3em; line-height:100%; margin:20px 0; padding-top:10px;}
+    h2 {font-size:1.6em; margin:15px 0 15px;}
+    h3 {font-size:1.2em; margin:15px 0 5px;}
+    h4 {font-size:1em; margin:15px 0 4px; padding:4px; background-color:#f4f4f4; border:1px solid black;}
+    ul {margin:0; padding:0;list-style-type:none;}
+    li {margin:0; padding:0;}
+    table {margin-bottom:20px; border-collapse:collapse;}
+    td, th {vertical-align:top; padding-right:25px; border: 1px solid #000000; padding: 3px 7px 2px 7px;}
+    th {background-color: #286ea0; color: #ffffff;}
+    tr.alt td {background-color: #A9C5D9; }
+
+    /* Additional classes */
+    .left {float:left; margin:3px 10px 2px 0;}
+    .right {float:right; margin:15px 0 0 10px;}
+    .textright {text-align:right; margin:5px 0;}
+    .center {text-align:center;}
+    .small {font-size:0.8em;}
+    .bold {font-weight:700;}
+    .endsect {margin:0;}
+    </style>
+</head>
+<body>
+<div id="wrap"><div id="content">
+
+<h1>es-printf documentation</h1>
+
+<h2 id="top">Contents</h2>
+<ul>
+    <li><a href="#whatis">What is es-printf?</a></li>
+    <li><a href="#files">es-printf files</a></li>
+    <li><a href="#format">Supported formatting commands</a></li>
+    <li><a href="#config">Configuration</a></li>
+    <li><a href="#integrate">Integration</a></li>
+    <li><a href="#test">Test code</a></li>
+    <li><a href="#size">AVR code size</a></li>
+    <li><a href="#licence">Licence</a></li>
+</ul>
+
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+
+<p class="right"><a href="#top">Top</a></p>
+<h2 id="whatis">What is es-printf?</h2>
+<p>
+    es-printf is an implementation of the standard C printf function targetted
+    at small embedded systems. It provides several advantages over the
+    standard function:
+</p>
+<ol>
+<li>
+    There are many fine-grained customisations which allow you to trim
+    the size to absolute minimum so it will fit in limited code space.
+    You can elect to have only hexadecimal output, full floating point support
+    and any number of options in between.
+</li>
+<li>
+    It does not use any static buffers so it is thread-safe and can
+    safely be used within interrupts and in an RTOS environment.
+</li>
+<li>
+    You provide your own output function which can be to a serial port
+    or to anything else convenient.
+</li>
+<li>
+    Because the source code is available it is easy to extend the
+    formatter to provide custom specifiers for your particular needs.
+</li>
+</ol>
+<p class="endsect">&nbsp;</p>
+
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+
+<p class="right"><a href="#top">Top</a></p>
+<h2 id="files">es-printf files</h2>
+<p>
+    The distribution contains a number of files of which three are needed for a working
+    implementation. 
+</p>
+<table>
+    <tr><th>File</th><th>Description</th></tr>
+    <tr><td>printf.c</td><td>Source code for the printf formatter in one file.<br />
+            For normal use you will not need to edit this file.</td></tr>
+    <tr><td>printf.h</td><td>Include file for users of the printf family functions.<br />
+            Some configuration options are required here.</td></tr>
+    <tr><td>printf_cfg.h</td><td>Include file used to configure printf.c.<br />
+            This file defines what features are supported by printf functions.</td></tr>
+    <tr><td>test.c</td><td>A set of tests used to check the performance of es-printf
+            against the standard library form, and to build versions for AVR to check
+            performance and code space.</td></tr>
+    <tr><td>makefile</td><td>makefile used to build the test images.</td></tr>
+</table>
+<p class="endsect">&nbsp;</p>
+
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+
+<p class="right"><a href="#top">Top</a></p>
+<h2 id="format">Supported formatting commands</h2>
+<p>
+    The format argument is a C string that contains the text to be written to output.
+    It can optionally contain embedded format specifiers that are replaced by the values
+    specified in subsequent additional arguments and formatted as requested.
+</p>
+<p>
+    A format specifier follows this prototype:<br />
+    %[flags][width][.precision][length]specifier 
+</p>
+<table>
+    <tr><th>Specifier</th><th>Output</th><th>Example</th></tr>
+    <tr><td>d or i</td><td>Signed decimal integer</td><td>789</td></tr>
+    <tr><td>u</td><td>Unsigned decimal integer</td><td>789</td></tr>
+    <tr><td>o</td><td>Unsigned octal integer</td><td>610</td></tr>
+    <tr><td>x</td><td>Unsigned hexadecimal integer</td><td>3ff</td></tr>
+    <tr><td>X</td><td>Unsigned hexadecimal integer (uppercase)</td><td>3FF</td></tr>
+    <tr><td>b</td><td>Unsigned binary integer</td><td>10011</td></tr>
+    <tr><td>f</td><td>Decimal floating point</td><td>789.12</td></tr>
+    <tr><td>e</td><td>Scientific notation (mantissa/exponent)</td><td>7.8912e+2</td></tr>
+    <tr><td>E</td><td>Scientific notation (uppercase)</td><td>7.8912E+2</td></tr>
+    <tr><td>g</td><td>Use shortest representation: %f or %e</td><td>789.12</td></tr>
+    <tr><td>G</td><td>Use shortest representation: %f or %E</td><td>789.12</td></tr>
+    <tr><td>c</td><td>Character</td><td>k</td></tr>
+    <tr><td>s</td><td>String of characters</td><td>example</td></tr>
+    <tr><td>S</td><td>String of characters (stored in flash rom)</td><td>example</td></tr>
+    <tr><td>%</td><td>A double % character will write a single % to output</td><td>%</td></tr>
+</table>
+
+<p>
+    The format specifier can also contain sub-specifiers: flags, width, .precision and modifiers
+    (in that order), which are optional.
+</p>
+<table id="flags">
+    <tr><th>Flags</th><th>Description</th></tr>
+    <tr><td>-</td><td>Left-justify within the given field width (right is the default)</td></tr>
+    <tr><td>+</td><td>Always output a preceeding plus or minus sign (+ or -) even for positive numbers.
+            By default, only negative numbers are preceded with a - sign.</td></tr>
+    <tr><td>(space)</td><td>If no minus sign is needed, output a space before the value.</td></tr>
+    <tr><td>#</td><td>Used with o, b, x or X specifiers the value is preceeded with 0, 0b, 0x or 0X
+            respectively.<br />
+            Used with e, E, f, g or G it forces the output to contain a decimal point even if
+            no more digits follow. By default, if no digits follow, no decimal point is written.</td></tr>
+    <tr><td>0</td><td>Left-pads the number with zeroes (0) instead of spaces when padding is specified.</td></tr>
+</table>
+
+<table>
+    <tr><th>Width</th><th>Description</th></tr>
+    <tr><td>(number)</td><td>Minimum number of characters to be output. If the value to be
+            printed is shorter than this number, the result is padded with blank spaces.
+            The value is not truncated even if the result is larger.</td></tr>
+    <tr><td>*</td><td>The width is not specified in the format string, but as an additional
+            integer value argument preceding the argument that has to be formatted.</td></tr>
+</table>
+
+<table id="precision">
+    <tr><th>.Precision</th><th>Description</th></tr>
+    <tr><td>.number</td><td>For integer specifiers (d, i, u, b, o, x, X): precision specifies the
+            minimum number of digits to be written. If the value to be written is shorter than
+            this number, the result is padded with leading zeros. The value is not truncated
+            even if the result is longer. A precision of 0 means that no character is written
+            for the value 0.<br />
+            For e, E and f specifiers: this is the number of digits to be printed after the
+            decimal point (by default, this is 6).<br />
+            For g and G specifiers: This is the maximum number of significant digits to be printed.<br />
+            For s and S: this is the maximum number of characters to be printed. By default all
+            characters are printed until the ending null character is encountered.<br />
+            If the period is specified without an explicit value for precision, 0 is assumed.</td></tr>
+    <tr><td>.*</td><td>The precision is not specified in the format string, but as an additional
+            integer value argument preceding the argument that has to be formatted.</td></tr>
+</table>
+
+<p>
+    The length sub-specifier modifies the length of the data type. This chart shows the types
+    used to interpret the corresponding arguments with and without length specifier
+</p>
+<table>
+    <tr><th></th><th colspan="5">Specifiers</th></tr>
+    <tr><th>Length</th><th>d i</th><th>u b o x X</th><th>f e E g G</th><th>c</th><th>s S</th></tr>
+    <tr><td>(none)</td><td>int</td><td>unsigned int</td><td>double</td><td>int</td><td>char*</td></tr>
+    <tr><td>l</td><td>long int</td><td>unsigned long int</td><td></td><td></td><td></td></tr>
+</table>
+<p class="endsect">&nbsp;</p>
+
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+
+<p class="right"><a href="#top">Top</a></p>
+<h2 id="config">Configuration</h2>
+<p>
+    Configuration takes place in two separate files.
+    <i>printf_cfg.h</i> is included only by printf.c itself.
+    <i>printf.h</i> is included by printf.c and by consumers of printf family functions.
+</p>
+
+<h3>printf_cfg.h</h3>
+<p>
+    This file defines the feature set supported and it is included only by printf.c
+    itself. The purpose of this file is to separate the configuration from the code
+    itself as much as possible. In normal use the code in printf.c will not need to
+    be changed at all.
+</p>
+<h4>#define BASIC_PRINTF_ONLY</h4>
+<p>
+    The code is designed to support a variety of printf-related functions.
+    If simple serial output is all you want then you can save some space by
+    defining BASIC_PRINTF_ONLY which allows the internal API to be simplified.
+    Note that sprintf will not be supported in this case.
+</p>
+<h4 id="get_format">#define GET_FORMAT(ptr)</h4>
+<p>
+    The GET_FORMAT(ptr) macro is used to access a character in the printf
+    format string. By default this does a normal memory pointer access, but
+    you can configure it to call an accessor function if needed.
+</p>
+<p>
+    This behaviour is required for the GCC AVR compiler when the format string
+    has been placed in flash using the technique described below under printf.h.
+    For many micros this will not be required and can be left commented out.
+</p>
+<h4>#define PUTCHAR_FUNC</h4>
+<p>
+    By default printf will use the putchar function t ohandle its output. If this
+    is not defined in your system, or if you wish to specify a different function,
+    you can set your own function here by defining PUTCHAR_FUNC to be the name of
+    that function. The function should expect a single char argument and need not
+    return a value.
+</p>
+<h4>#define NO_DOUBLE_PRECISION</h4>
+<p>
+    Some compilers do not support double precision and silently degrade to
+    single precision. If this is the case then the floating point formatting
+    can be reduced a little using this option, rather than try to handle data
+    which does not actually exist.
+</p>
+<h4>#define NO_ISNAN_ISINF</h4>
+<p>
+    Some compilers do not support the isnan and isinf floating point functions
+    to detect the not-a-number and infinity special cases. If this option is
+    defined then those tests are simply ignored and the output for those values
+    is indeterminate.
+</p>
+
+<h4>typedef width_t</h4>
+<p>
+    Since it is extremely unlikely that you will ever want to use a formatted
+    width for a single item of more than 127 chars (i.e. the expanded and
+    padded size of a single % expression), the width variables can normally
+    be restricted to 8 bits. On small micros this saves a lot of code and
+    variable space. On a 32-bit RISC it may increase code size due to type
+    conversions. Choose the variable type to suit your CPU.
+    Note that a signed type is required.
+</p>
+
+<h4>Feature configuration</h4>
+<p>
+    You can enable and disable features at a fine-grained level, allowing
+    you to provide only the features you need and control the code size.
+    Define as non-zero to enable, zero to disable.
+</p>
+<table>
+    <tr><th>Define</th><th>Description</th></tr>
+    <tr><td>USE_FLOAT</td><td>Include floating point support.
+            Most of the time you will not need this and it adds considerable weight
+            to the code as well as pulling in the floating point libraries.</td></tr>
+    <tr><td>USE_LONG</td><td>Include support for long integers. Often not needed for
+            embedded applications. If you are happy using hex output you can also
+            print longs by splitting into two shorts.</td></tr>
+    <tr><td>USE_OCTAL</td><td>Traditionally printf supports octal output but you very
+            rarely see it used, so why waste the code space?</td></tr>
+    <tr><td>USE_BINARY</td><td>An extension to printf to use %b for binary output.</td></tr>
+    <tr><td>USE_SIGNED</td><td>Supports %d for signed decimal output.</td></tr>
+    <tr><td>USE_SIGNED_I</td><td>Supports %i as a synonym for %d. Omitting this doesn't
+            save a lot, but every little helps.</td></tr>
+    <tr><td>USE_UNSIGNED</td><td>Supports %u for unsigned decimal output. In many cases
+            %d is good enough on its own.</td></tr>
+    <tr><td>USE_HEX_LOWER</td><td>Supports %x (lowercase hex output).</td></tr>
+    <tr><td>USE_HEX_UPPER</td><td>Supports %X (uppercase hex output).</td></tr>
+    <tr><td>USE_HEX_UPPER_L</td><td>In conjunction with %x, if you decide you want all output to
+            be uppercase instead you can include this option instead of changing all the format strings.</td></tr>
+    <tr><td>USE_CHAR</td><td>Supports %c for single character output.</td></tr>
+    <tr><td>USE_STRING</td><td>Supports %s for string output.</td></tr>
+    <tr><td>USE_FSTRING</td><td>Supports %S for string output where the string is embedded in flash.
+            This option is only useful in micros such as the AVR where strings in flash
+            require different memory access methods.
+            The <a href="#get_format">GET_FORMAT</a> macro is used to access the string in this case.</td></tr>
+    <tr><td>USE_PRECISION</td><td>Include <a href="#precision">precision</a> support when floating point is not present.
+            Precision is automatically enabled when floating point support is used.
+            For integer work it is not very useful, though strings sometime use it.</td></tr>
+    <tr><td>USE_ZERO_PAD</td><td>Allow use of the field widths with leading zero padding e.g. %03d.</td></tr>
+    <tr><td>USE_SPACE_PAD</td><td>Allow use of fields widths with space padding, e.g. %3d or %12s</td></tr>
+    <tr><td>USE_INDIRECT</td><td>Include indirect width/precision support, e.g. %*d.
+            I don't think I have ever used this.</td></tr>
+    <tr><td>USE_PLUS_SIGN</td><td>Allow use of the <a href="#flags">plus flag</a> e.g. %+d.</td></tr>
+    <tr><td>USE_SPACE_SIGN</td><td>Allow use of the <a href="#flags">space flag</a> e.g. % d.</td></tr>
+    <tr><td>USE_LEFT_JUST</td><td>Allow use of the <a href="#flags">left-justify flag</a> e.g. %-12s.</td></tr>
+    <tr><td>USE_SPECIAL</td><td>Allow use of the <a href="#flags">special # flag</a> e.g. %#02x</td></tr>
+</table>
+
+<h4>Pre-defined feature groups</h4>
+<p>
+    Most of the time you can use one of the pre-defined configs which give sensible
+    sets of options.
+</p>
+<table>
+    <tr><th>Group</th><th>Description</th></tr>
+    <tr><td>HEX_INT</td><td>Lowercase hex only, no char or string.</td></tr>
+    <tr><td>MINIMAL_INT</td><td>Decimal and lowercase hex only, no char or string.</td></tr>
+    <tr><td>BASIC_INT</td><td>Signed and unsigned decimal, lowercase hex, zero and space padding.</td></tr>
+    <tr><td>SHORT_INT</td><td>All short integer features except binary, octal, %i, indirection and specials.</td></tr>
+    <tr><td>LONG_INT</td><td>As above, but also supports long integers.</td></tr>
+    <tr><td>FULL_INT</td><td>All possible integer features.</td></tr>
+    <tr><td>FULL_FLOAT</td><td>All available features including floating point.</td></tr>
+</table>
+
+<h3>printf.h</h3>
+<p>
+    This file defines the way printf() is called and the value it returns.
+</p>
+<h4>#define PRINTF_T</h4>
+<p>
+    Traditionally printf returns the number of chars output. If you are not interested
+    in that value you can leave PRINTF_T undefined, which eliminates the code required
+    to count characters output.
+</p>
+<p>
+    On a small micro you can often define the return type as unsigned char since it
+    in most use cases the output will never exceed 255 characters. This allows an 8-bit
+    variable to be used for character counting, saving code space. Alternatively you
+    can use unsigned short or simply int.
+</p>
+
+<h4>#define printf</h4>
+<p>
+    Some devices, notably the GCC AVR compiler, need some trickery here to get the
+    format strings to reside in flash memory rather than RAM, requiring the string
+    to be wrapped in a macro. To make this transparent we can define the printf
+    function itself as a macro which performs the wrap and calls a renamed version
+    of printf with a _rom suffix.
+</p>
+<p>
+    The header supplied shows how to do this for AVR. For many other micros this will
+    not be required and can be left commented out.
+</p>
+
+<p class="endsect">&nbsp;</p>
+
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+
+<p class="right"><a href="#top">Top</a></p>
+<h2 id="integrate">Integration</h2>
+<p>
+    You need to add these three source files to your project: printf.c printf.h printf_cfg.h.
+    Unless you need to add or modify features you will not need to edit printf.c at all.
+    Go through printf.h and pick the options to suit your environment. If you don't need
+    any oddball ways of getting quoted strings into flash memory then there is not a lot
+    to do here and the defaults will work fine.
+</p>
+<p>
+    Go through printf_cfg.h and select the options you want. As a minimum you will
+    need to set the output function, unless you already have a function called putchar which
+    does what you want. You'll also need to select which feature set you want. Pick one of the
+    pre-defined groups to start with.
+</p>
+<p>
+    In the source files where you want to call printf you will need to explicitly #include
+    printf.h as the prototypes may be different from what comes in stdio.h with your compiler.
+    Build your project and hopefully everything will just work.
+</p>
+
+<p class="endsect">&nbsp;</p>
+
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+
+<p class="right"><a href="#top">Top</a></p>
+<h2 id="test">Test code</h2>
+<p>
+    The test code provided is mainly for development use to allow the code to be checked.
+    If you are just integrating es-printf into your own application you won't need this part.
+    It does several things.
+</p>
+<ol>
+    <li>It produces an executable to run on PC or
+    Linux (only tested on PC) which uses both the standard printf and this version
+    so that the output can be compared for equivalent behaviour.</li>
+    <li>It generates a hex file for AVR using Win-AVR so the test code can be run on a real
+    embedded system.</li>
+    <li>It generates AVR elf files with and without printf linked so we can see
+    exactly how much code space is taken for any given set of options.</li>
+    <li>It generates a hex file for STM8 using the Raisonance compiler. This is to validate
+    the code on another very different 8-bit architecture.</li>
+</ol>
+<p>
+    The PC test code uses the gcc compiler which is assumed to be in the default path.
+</p>
+<p>
+    The AVR test code uses WinAVR-20100110 compiler which is assumed to be at its default
+    installation location. More recent versions are shipped as part of Atmel Studio and
+    are located in the Program Files directory. You would need to adjust the paths in the
+    makefile to cope with this.
+</p>
+<p>
+    The STM8 test code is built using the Raisonance Ride7 IDE. You need to load the .rprj
+    file and build it.
+</p>
+
+<p class="endsect">&nbsp;</p>
+
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+
+<p class="right"><a href="#top">Top</a></p>
+<h2 id="size">AVR Code Size</h2>
+<p>
+    The table below shows the approximate code size of the printf function for an 8-bit AVR,
+    using some of the pre-defined feature groups.
+</p>
+<p>
+    The size is derived by comparing a build with a single call to printf and an empty format
+    string to a build without that call. For real-world use you will need to add the overhead
+    of making real calls to printf, which includes the length of the format string itself and
+    the overhead of pushing the values onto the stack.
+</p>
+<p>
+    All values were checked using WinAVR-20100110 with no return value from printf,
+    except where stated.
+</p>
+<p>
+    The floating point figure also covers the size of floating point libraries.
+    If you are using the floating point version of printf then presumably you
+    are already using floating point in your code anyway, so some of those libraries
+    will already be in your code. A similar argument applies to long integer support.
+</p>
+<table>
+    <tr><th>Config</th><th>Size in bytes</th></tr>
+    <tr><td>HEX_INT + BASIC_PRINTF_ONLY</td><td>200</td></tr>
+    <tr><td>MINIMAL_INT + BASIC_PRINTF_ONLY</td><td>358</td></tr>
+    <tr><td>BASIC_INT + BASIC_PRINTF_ONLY</td><td>602</td></tr>
+    <tr><td>BASIC_INT</td><td>644</td></tr>
+    <tr><td>SHORT_INT</td><td>822</td></tr>
+    <tr><td>SHORT_INT (with short int return)</td><td>846</td></tr>
+    <tr><td>LONG_INT</td><td>1044</td></tr>
+    <tr><td>FULL_INT</td><td>1228</td></tr>
+    <tr><td>FULL_FLOAT</td><td>3878</td></tr>
+</table>
+
+<p class="endsect">&nbsp;</p>
+
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+
+<p class="right"><a href="#top">Top</a></p>
+<h2 id="licence">Licence</h2>
+<p>
+    This software is licensed using the standard MIT licence. In short it means you can
+    use these functions in both open source and commercial software without having to
+    release source code or advertise the fact that you have used these files.
+    The only restriction is that you must retain the copyright notice and attribution
+    within the source code, whether you use it as-is or whether you derive your own version.
+    You are not required to publish anything, nor provide attribution in the documentation.
+    The licence terms are reproduced in full below.
+</p>
+<hr />
+<p>
+    Copyright &copy; 2006 - 2015 Skirrid Systems
+</p>
+<p>
+    Permission is hereby granted, free of charge, to any person obtaining a
+    copy of this software and associated documentation files (the "Software"),
+    to deal in the Software without restriction, including without limitation
+    the rights to use, copy, modify, merge, publish, distribute, sublicense,
+    and/or sell copies of the Software, and to permit persons to whom the
+    Software is furnished to do so, subject to the following conditions:
+</p>
+<p>
+    The above copyright notice and this permission notice shall be included in
+    all copies or substantial portions of the Software.
+</p>
+<p>
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+    THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+    DEALINGS IN THE SOFTWARE.
+</p>
+
+</div></div>
+</body>
+</html>
