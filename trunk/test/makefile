@@ -37,7 +37,8 @@ PRINTF_SRC = printf.c printf.h printf_cfg.h
 PRINTF_DIR = ../src
 
 # Tool chain used for this project.
-AVRGCC = /winavr-20100110
+# AVRGCC = /winavr-20100110
+AVRGCC = "C:/Program Files (x86)/Atmel/Studio/7.0/toolchain/avr8/avr8-gnu-toolchain"
 
 # Tool chain used for the PC test version
 PC_GCC = gcc
