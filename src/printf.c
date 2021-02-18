@@ -59,10 +59,20 @@ DEALINGS IN THE SOFTWARE.
 #define FEATURE(flag)   ((FEATURE_FLAGS) & (flag))
 
 // Size of buffer for formatting numbers into
-#if FEATURE(USE_FLOAT)
-    #define BUFMAX  30
+#if FEATURE(USE_BINARY)
+    #if FEATURE(USE_LONG)
+        #define BUFMAX  32
+    #elif FEATURE(USE_FLOAT)
+        #define BUFMAX  30
+    #else
+        #define BUFMAX  16
+    #endif
 #else
-    #define BUFMAX  16
+    #if FEATURE(USE_FLOAT)
+        #define BUFMAX  30
+    #else
+        #define BUFMAX  16
+    #endif
 #endif
 
 // Bits in the flags variable
