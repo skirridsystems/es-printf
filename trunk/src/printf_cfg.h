@@ -177,6 +177,9 @@ These are combined as needed to produce the FEATURE_FLAGS macro.
 // This is not recommended unless code space is critically low.
 #define USE_SMALL_FLOAT (1UL<<24)
 
+// Include support for 64-bit integers e.g. "%lld"
+#define USE_LONG_LONG   (1UL<<25)
+
 /*************************************************************************
 Pre-defined feature sets
 
@@ -208,9 +211,13 @@ This section provides some commonly used combinations of features.
 #define LONG_INT ( \
         USE_LONG | SHORT_INT )
 
+// As above, but also supports long-long integers.
+#define LONG_LONG_INT ( \
+        USE_LONG_LONG | LONG_INT )
+
 // All possible integer features.
 #define FULL_INT ( \
-        USE_BINARY | USE_OCTAL | USE_SIGNED_I | USE_INDIRECT | USE_SPECIAL | LONG_INT )
+        USE_BINARY | USE_OCTAL | USE_SIGNED_I | USE_INDIRECT | USE_SPECIAL | LONG_LONG_INT )
 
 // All available features including floating point.
 #define FULL_FLOAT ( \
@@ -240,9 +247,10 @@ This section provides some commonly used combinations of features.
         USE_LEFT_JUST   \
         USE_SPECIAL     \
         USE_SMALL_FLOAT \
+        USE_LONG_LONG   \
 )
 
 // Current feature set. Use a pre-defined set or define your own.
-#define FEATURE_FLAGS   FULL_FLOAT
+#define FEATURE_FLAGS   FULL_INT
 
 #endif
