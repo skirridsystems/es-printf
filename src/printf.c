@@ -757,6 +757,11 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
 #if !HEX_CONVERT_ONLY
             number:
 #endif
+                /* Using separate va_arg() calls for signed and unsigned types is expensive.
+                   Instead, values are read as signed, regardless of signed/unsigned type.
+                   This can cause unwanted widening of unsigned values which have the MSB set,
+                   and this is fixed after the check for negative numbers.
+                */
 #if FEATURE(USE_LONG)
                 if (flags & FL_LONG)
                     uvalue = va_arg(ap, long);
@@ -780,6 +785,14 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                         flags &= ~FL_NEG;   // No, it's positive
                     }
                 }
+  #if FEATURE(USE_LONG)
+                // Avoid sign extension making unsigned variables too wide.
+                else
+                {
+                    if (!(flags & FL_LONG))
+                        uvalue = (unsigned) uvalue;
+                }
+  #endif
 #endif
 #if FEATURE(USE_PRECISION)
                 // Set default precision
