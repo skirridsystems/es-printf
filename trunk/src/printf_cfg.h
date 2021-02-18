@@ -173,6 +173,10 @@ These are combined as needed to produce the FEATURE_FLAGS macro.
 // Include support for the special '#' flag.
 #define USE_SPECIAL     (1UL<<23)
 
+// Use smaller but less efficient floating point normalisation.
+// This is not recommended unless code space is critically low.
+#define USE_SMALL_FLOAT (1UL<<24)
+
 /*************************************************************************
 Pre-defined feature sets
 
@@ -235,9 +239,10 @@ This section provides some commonly used combinations of features.
         USE_SPACE_SIGN  \
         USE_LEFT_JUST   \
         USE_SPECIAL     \
+        USE_SMALL_FLOAT \
 )
 
 // Current feature set. Use a pre-defined set or define your own.
-#define FEATURE_FLAGS   SHORT_INT
+#define FEATURE_FLAGS   FULL_FLOAT
 
 #endif
