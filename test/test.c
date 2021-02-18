@@ -71,6 +71,7 @@ DEALINGS IN THE SOFTWARE.
 #else
     // PC tests
     #include <stdio.h>
+    #include <string.h>
     // The PC library version always produces 3-digit exponents.
     // Force the same thing in our code to make comparison easier.
     #define EXP_3_DIGIT
