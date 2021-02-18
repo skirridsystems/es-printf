@@ -81,9 +81,10 @@ DEALINGS IN THE SOFTWARE.
 
 // Bits in the fflags variable
 #define FF_UCASE        (1<<0)
-#define FF_FCVT         (1<<1)
-#define FF_GCVT         (1<<2)
-#define FF_NRND         (1<<3)
+#define FF_ECVT         (1<<1)
+#define FF_FCVT         (1<<2)
+#define FF_GCVT         (1<<3)
+#define FF_NRND         (1<<4)
 
 // Most compilers can support double precision
 #ifndef NO_DOUBLE_PRECISION
@@ -713,54 +714,22 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
             case 'i':
 #endif
 #if FEATURE(USE_SIGNED) || FEATURE(USE_SIGNED_I)
-  #if FEATURE(USE_LONG)
-                if (flags & FL_LONG)
-                    uvalue = va_arg(ap, long);
-                else
-  #endif
-                    uvalue = va_arg(ap, int);
+                flags |= FL_NEG;    // Flag possible negative value, to be determined later
                 base = 10;
-  #if FEATURE(USE_LONG)
-                if ((long) uvalue < 0)
-  #else
-                if ((int) uvalue < 0)
-  #endif
-                {
-                    flags |= FL_NEG;
-                    uvalue = -uvalue;
-                }
                 goto number;
 #endif
 #if FEATURE(USE_UNSIGNED)
             case 'u':
-  #if FEATURE(USE_LONG)
-                if (flags & FL_LONG)
-                    uvalue = va_arg(ap, unsigned long);
-                else
-  #endif
-                    uvalue = va_arg(ap, unsigned);
                 base = 10;
                 goto number;
 #endif
 #if FEATURE(USE_OCTAL)
             case 'o':
-  #if FEATURE(USE_LONG)
-                if (flags & FL_LONG)
-                    uvalue = va_arg(ap, unsigned long);
-                else
-  #endif
-                    uvalue = va_arg(ap, unsigned);
                 base = 8;
                 goto number;
 #endif
 #if FEATURE(USE_BINARY)
             case 'b':
-  #if FEATURE(USE_LONG)
-                if (flags & FL_LONG)
-                    uvalue = va_arg(ap, unsigned long);
-                else
-  #endif
-                    uvalue = va_arg(ap, unsigned);
                 base = 2;
                 goto number;
 #endif
@@ -771,18 +740,36 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
             case 'X':
 #endif
 #if FEATURE(USE_HEX_LOWER) || FEATURE(USE_HEX_UPPER)
-  #if FEATURE(USE_LONG)
-                if (flags & FL_LONG)
-                    uvalue = va_arg(ap, unsigned long);
-                else
-  #endif
-                    uvalue = va_arg(ap, unsigned);
   #if !HEX_CONVERT_ONLY
                 base = 16;
   #endif
 #endif
 #if !HEX_CONVERT_ONLY
             number:
+#endif
+#if FEATURE(USE_LONG)
+                if (flags & FL_LONG)
+                    uvalue = va_arg(ap, long);
+                else
+#endif
+                    uvalue = va_arg(ap, int);
+#if FEATURE(USE_SIGNED) || FEATURE(USE_SIGNED_I)
+                if (flags & FL_NEG)
+                {
+                    // Check signed values
+  #if FEATURE(USE_LONG)
+                    if ((long) uvalue < 0)
+  #else
+                    if ((int) uvalue < 0)
+  #endif
+                    {
+                        uvalue = -uvalue;   // Yes, it's negative
+                    }
+                    else
+                    {
+                        flags &= ~FL_NEG;   // No, it's positive
+                    }
+                }
 #endif
 #if FEATURE(USE_PRECISION)
                 // Set default precision
@@ -895,30 +882,22 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                 break;
 #if FEATURE(USE_FLOAT)
             case 'f':
-                // Set default precision
-                if (precision == -1) precision = 6;
-                fvalue = va_arg(ap, double);
                 fflags = FF_FCVT;
-                p = format_float(fvalue, precision, width, flags, fflags, buffer);
-                // Precision is not used to limit number output.
-                precision = -1;
-                break;
+                goto fp_number;
             case 'E':
                 fflags = FF_UCASE;
             case 'e':
-                // Set default precision
-                if (precision == -1) precision = 6;
-                fvalue = va_arg(ap, double);
-                p = format_float(fvalue, precision + 1, width, flags, fflags, buffer);
-                // Precision is not used to limit number output.
-                precision = -1;
-                break;
+                fflags |= FF_ECVT;
+                goto fp_number;
             case 'G':
                 fflags = FF_UCASE;
             case 'g':
                 fflags |= FF_GCVT;
+            fp_number:
                 // Set default precision
                 if (precision == -1) precision = 6;
+                // Need one extra digit precision in E mode
+                if (fflags & FF_ECVT) ++precision;
                 fvalue = va_arg(ap, double);
                 p = format_float(fvalue, precision, width, flags, fflags, buffer);
                 // Precision is not used to limit number output.
