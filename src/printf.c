@@ -99,18 +99,23 @@ DEALINGS IN THE SOFTWARE.
                               FEATURE(USE_OCTAL) || FEATURE(USE_BINARY))
 
 #if FEATURE(USE_FLOAT)
-static const double smalltable[] = {
-#ifndef NO_DOUBLE_PRECISION
-    1e-256, 1e-128, 1e-64,
+
+#if !FEATURE(USE_SMALL_FLOAT)
+    // Floating point normalisation tables
+    static const double smalltable[] = {
+    #ifndef NO_DOUBLE_PRECISION
+        1e-256, 1e-128, 1e-64,
+    #endif
+        1e-32, 1e-16, 1e-8, 1e-4, 1e-2, 1e-1, 1.0
+    };
+    static const double largetable[] = {
+    #ifndef NO_DOUBLE_PRECISION
+        1e+256, 1e+128, 1e+64,
+    #endif
+        1e+32, 1e+16, 1e+8, 1e+4, 1e+2, 1e+1
+    };
 #endif
-    1e-32, 1e-16, 1e-8, 1e-4, 1e-2, 1e-1, 1.0
-};
-static const double largetable[] = {
-#ifndef NO_DOUBLE_PRECISION
-    1e+256, 1e+128, 1e+64,
-#endif
-    1e+32, 1e+16, 1e+8, 1e+4, 1e+2, 1e+1
-};
+
 #ifndef NO_DOUBLE_PRECISION
     // Double precision numbers up to 10^308 require 16-bit exponents.
     typedef signed short flt_width_t;
@@ -142,7 +147,6 @@ static char *format_float(double number, flt_width_t ndigits, flt_width_t width,
                           unsigned char flags, unsigned char fflags, char *buf)
 {
     flt_width_t decpt;
-    flt_width_t power10;
     flt_width_t nzero;
     unsigned char i;
     char *p = buf + 2;
@@ -200,15 +204,36 @@ static char *format_float(double number, flt_width_t ndigits, flt_width_t width,
     }
     else
     {
-        /* Normalise the number such that it lies in the range 1 <= n < 10.
-         * This is done using a binary search, making the largest possible
+        // Normalise the number such that it lies in the range 1 <= n < 10.
+#if FEATURE(USE_SMALL_FLOAT)
+        /* Normalise using a linear search. This code is simple and uses
+         * least code space. It also eliminates the lookup tables which may
+         * otherwise take up RAM space. However, it can take many more operations
+         * to execute for the full range of floating point values, and may
+         * introduce rounding errors. Use only when space is critical.
+         */
+        // First make small numbers bigger.
+        decpt = 1;
+        while (number < 1.0)
+        {
+            number *= 10.0;
+            --decpt;
+        }
+        // Then make big numbers smaller.
+        while (number >= 10.0)
+        {
+            number /= 10.0;
+            ++decpt;
+        }
+#else
+        /* Normalise using a binary search, making the largest possible
          * adjustment first and getting progressively smaller. This gets
          * to the answer in the fastest time, with the minimum number of
          * operations to introduce rounding errors.
          */
-        decpt = 1;
         // First make small numbers bigger.
-        power10 = MAX_POWER;
+        flt_width_t power10 = MAX_POWER;
+        decpt = 1;
         i = 0;
         while (number < 1.0)
         {
@@ -242,6 +267,7 @@ static char *format_float(double number, flt_width_t ndigits, flt_width_t width,
             power10 >>= 1;
             i++;
         }
+#endif
     }
     
     // For g conversions determine whether to use e or f mode.
