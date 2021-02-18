@@ -176,11 +176,17 @@ int main(int argc, char *argv[])
 #define N   -23
 #define X   0x5a
 #define O   023
+#define B8  0x35
+#define B16 0x5AA5
+#define B32 0x0FF05AA5UL
+#define B64 0x0FF05AA539931111ULL
+#define NL  -23L
+#define NLL -23LL
 #define S   "Abcde"
 
 #ifdef COMPARE_TEST
-static char stdbuf[80];
-static char testbuf[80];
+static char stdbuf[200];
+static char testbuf[200];
 static int testindex;
 
 void testinit(void)
@@ -237,7 +243,13 @@ int main(int argc, char *argv[])
 #if FEATURE(USE_SPACE_PAD) || FEATURE(USE_ZERO_PAD)
   // Tests for variants which include the padding options.
   #if FEATURE(USE_SIGNED)
-    tprintf("Int %d %4d %04d %+04d % 4d %-4d. %+3d %+3d % 3d % 3d\n", N, N, N, N, N, N, 0, -1, 0, -1);
+    tprintf("Int %d %4d %04d %+04d % 4d %-4d. %+3d %+3d % 3d % 3d %u\n", N, N, N, N, N, N, 0, -1, 0, -1, -1);
+    #if FEATURE(USE_LONG)
+    tprintf("Lng %ld %4ld %04ld %+04ld % 4ld %-4ld. %+3ld %+3ld % 3ld % 3ld %lu\n", NL, NL, NL, NL, NL, NL, 0L, -1L, 0L, -1L, -1L);
+    #endif
+    #if FEATURE(USE_LONG_LONG)
+    tprintf("L64 %lld %4lld %04lld %+04lld % 4lld %-4lld. %+3lld %+3lld % 3lld % 3lld %llu\n", NLL, NLL, NLL, NLL, NLL, NLL, 0LL, -1LL, 0LL, -1LL, -1LL);
+    #endif
   #endif
   #if FEATURE(USE_HEX_UPPER) || FEATURE(USE_HEX_LOWER)
     tprintf("Hex %x %4x %018X %+x % x %-4x. %+#x\n", X, X, X, X, X, X, X);
@@ -246,7 +258,13 @@ int main(int argc, char *argv[])
     tprintf("Oct %o %4o %04o %+o % o %-4o. %+#o\n", O, O, O, O, O, O, O);
   #endif
   #if FEATURE(USE_BINARY)
-    tprintf("Bin %b %4b %04b %+b % b %-4b. %+#b\n", O, O, O, O, O, O, O);
+    tprintf("Bin %b %8b %08b %+b % b %-8b. %+#b\n", B8, B8, B8, B8, B8, B8, B8);
+    #if FEATURE(USE_LONG)
+    tprintf("B32 %lb %032lb\n", B32, B32);
+    #endif
+    #if FEATURE(USE_LONG_LONG)
+    tprintf("B64 %llb %064llb\n", B64, B64);
+    #endif
   #endif
   #if FEATURE(USE_STRING)
     tprintf("Str [%s] [%8s] [%-8s]\n", S, S, S);
