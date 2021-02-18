@@ -60,7 +60,9 @@ DEALINGS IN THE SOFTWARE.
 
 // Size of buffer for formatting numbers into
 #if FEATURE(USE_BINARY)
-    #if FEATURE(USE_LONG)
+    #if FEATURE(USE_LONG_LONG)
+        #define BUFMAX  64
+    #elif FEATURE(USE_LONG)
         #define BUFMAX  32
     #elif FEATURE(USE_FLOAT)
         #define BUFMAX  30
@@ -70,6 +72,8 @@ DEALINGS IN THE SOFTWARE.
 #else
     #if FEATURE(USE_FLOAT)
         #define BUFMAX  30
+    #elif FEATURE(USE_LONG_LONG)
+        #define BUFMAX  22
     #else
         #define BUFMAX  16
     #endif
@@ -95,6 +99,7 @@ DEALINGS IN THE SOFTWARE.
 #define FF_FCVT         (1<<2)
 #define FF_GCVT         (1<<3)
 #define FF_NRND         (1<<4)
+#define FF_XLONG        (1<<5)
 
 // Most compilers can support double precision
 #ifndef NO_DOUBLE_PRECISION
@@ -572,7 +577,9 @@ static printf_t doprnt(void (*func)(char c), const char *fmt, va_list ap)
 static printf_t doprnt(void *context, void (*func)(char c, void *context), const char *fmt, va_list ap)
 #endif
 {
-#if FEATURE(USE_LONG)
+#if FEATURE(USE_LONG_LONG)
+    unsigned long long uvalue;
+#elif FEATURE(USE_LONG)
     unsigned long uvalue;
 #else
     unsigned uvalue;
@@ -596,8 +603,10 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
     printf_t count = 0;
 #endif
     unsigned char flags;
-#if FEATURE(USE_FLOAT)
+#if FEATURE(USE_FLOAT) || FEATURE(USE_LONG_LONG)
     unsigned char fflags;
+#endif
+#if FEATURE(USE_FLOAT)
     double fvalue;
 #endif
 
@@ -616,7 +625,7 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
 #if FEATURE(USE_SPACE_PAD) || FEATURE(USE_ZERO_PAD)
             width = 0;
 #endif
-#if FEATURE(USE_FLOAT)
+#if FEATURE(USE_FLOAT) || FEATURE(USE_LONG_LONG)
             fflags = 0;
 #endif
             flags = 0;
@@ -703,8 +712,16 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
             // Extract length modifier
             if (convert == 'l')
             {
-                flags |= FL_LONG;
                 convert = GET_FORMAT(++fmt);
+    #if FEATURE(USE_LONG_LONG)
+                if (convert == 'l')
+                {
+                    fflags |= FF_XLONG;
+                    convert = GET_FORMAT(++fmt);
+                }
+                else
+    #endif
+                flags |= FL_LONG;
             }
 #endif
             switch (convert)
@@ -763,20 +780,29 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                    and this is fixed after the check for negative numbers.
                 */
 #if FEATURE(USE_LONG)
+    #if FEATURE(USE_LONG_LONG)
+                if (fflags & FF_XLONG)
+                    uvalue = va_arg(ap, long long);
+                else
+    #endif
                 if (flags & FL_LONG)
                     uvalue = va_arg(ap, long);
                 else
 #endif
                     uvalue = va_arg(ap, int);
 #if FEATURE(USE_SIGNED) || FEATURE(USE_SIGNED_I)
+                // Check for negative values
                 if (flags & FL_NEG)
                 {
-                    // Check signed values
-  #if FEATURE(USE_LONG)
+    #if FEATURE(USE_LONG)
+        #if FEATURE(USE_LONG_LONG)
+                    if ((long long) uvalue < 0)
+        #else
                     if ((long) uvalue < 0)
-  #else
+        #endif
+    #else
                     if ((int) uvalue < 0)
-  #endif
+    #endif
                     {
                         uvalue = -uvalue;   // Yes, it's negative
                     }
@@ -785,14 +811,24 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                         flags &= ~FL_NEG;   // No, it's positive
                     }
                 }
-  #if FEATURE(USE_LONG)
+    #if FEATURE(USE_LONG)
                 // Avoid sign extension making unsigned variables too wide.
                 else
                 {
+        #if FEATURE(USE_LONG_LONG)
+                    if (!(fflags & FF_XLONG))
+                    {
+                        if (!(flags & FL_LONG))
+                            uvalue = (unsigned) uvalue;
+                        else
+                            uvalue = (unsigned long) uvalue;
+                    }
+        #else
                     if (!(flags & FL_LONG))
                         uvalue = (unsigned) uvalue;
+        #endif
                 }
-  #endif
+    #endif
 #endif
 #if FEATURE(USE_PRECISION)
                 // Set default precision
