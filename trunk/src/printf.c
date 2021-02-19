@@ -1,12 +1,12 @@
-/*************************************************************************
+/*****************************************************************************
 es-printf  -  configurable printf for embedded systems
 
 printf.c: Main source file for printf family of functions.
 
 $Id$
 
-**************************************************************************
-Copyright (c) 2006 - 2015 Skirrid Systems
+******************************************************************************
+Copyright (c) 2006 - 2021 Skirrid Systems
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -58,7 +58,8 @@ DEALINGS IN THE SOFTWARE.
 // These are defined in print_cfg.h
 #define FEATURE(flag)   ((FEATURE_FLAGS) & (flag))
 
-// Size of buffer for formatting numbers into
+// Size of buffer for formatting numbers into.
+// Use the smallest buffer we can get away with to conserve RAM.
 #if FEATURE(USE_BINARY)
     #if FEATURE(USE_LONG)
         #define BUFMAX  32
@@ -77,7 +78,7 @@ DEALINGS IN THE SOFTWARE.
     #endif
 #endif
 
-// Bits in the flags variable
+// Bit definitions in the flags variable (integer and general)
 #if FEATURE(USE_LEFT_JUST)
   #define FL_LEFT_JUST  (1<<0)
 #else
@@ -91,13 +92,22 @@ DEALINGS IN THE SOFTWARE.
 #define FL_LONG         (1<<6)
 #define FL_FSTR         (1<<7)
 
-// Bits in the fflags variable
+// Bit definitions in the fflags variable (mostly floating point)
 #define FF_UCASE        (1<<0)
 #define FF_ECVT         (1<<1)
 #define FF_FCVT         (1<<2)
 #define FF_GCVT         (1<<3)
 #define FF_NRND         (1<<4)
 #define FF_XLONG        (1<<5)
+
+// Check whether integer or octal support is needed.
+#define HEX_CONVERT_ONLY    !(FEATURE(USE_SIGNED) || FEATURE(USE_SIGNED_I) || FEATURE(USE_UNSIGNED) || \
+                              FEATURE(USE_OCTAL) || FEATURE(USE_BINARY))
+
+/*****************************************************************************
+Floating point 
+******************************************************************************/
+#if FEATURE(USE_FLOAT)
 
 // Most compilers can support double precision
 #ifndef NO_DOUBLE_PRECISION
@@ -108,20 +118,16 @@ DEALINGS IN THE SOFTWARE.
   #define FLOAT_DIGITS  8
 #endif
 
-// Check whether integer or octal support is needed.
-#define HEX_CONVERT_ONLY    !(FEATURE(USE_SIGNED) || FEATURE(USE_SIGNED_I) || FEATURE(USE_UNSIGNED) || \
-                              FEATURE(USE_OCTAL) || FEATURE(USE_BINARY))
-
-#if FEATURE(USE_FLOAT)
-
 #if !FEATURE(USE_SMALL_FLOAT)
-    // Floating point normalisation tables
+    // Floating point normalisation tables for fast normalisation.
+    // smalltable[] is used for value < 1.0
     static const double smalltable[] = {
     #ifndef NO_DOUBLE_PRECISION
         1e-256, 1e-128, 1e-64,
     #endif
         1e-32, 1e-16, 1e-8, 1e-4, 1e-2, 1e-1, 1.0
     };
+    // large table[] is used for value >= 10.0
     static const double largetable[] = {
     #ifndef NO_DOUBLE_PRECISION
         1e+256, 1e+128, 1e+64,
@@ -130,12 +136,13 @@ DEALINGS IN THE SOFTWARE.
     };
 #endif
 
-#ifndef NO_DOUBLE_PRECISION
+#ifdef NO_DOUBLE_PRECISION
+    // Double precision not supported by compiler.
+    // Single precision numbers up to 10^38 require only 8-bit exponent.
+    typedef signed char flt_width_t;
+#else
     // Double precision numbers up to 10^308 require 16-bit exponents.
     typedef signed short flt_width_t;
-#else
-    // Single precision numbers up to 10^38 require only 8-bit exponent
-    typedef signed char flt_width_t;
 #endif
 
 // These define the maximum number of digits that can be output into the buffer.
@@ -157,6 +164,16 @@ static char *trim_zeros(char *p)
     return p;
 }
 
+/* ---------------------------------------------------------------------------
+Function: format_float()
+Called from the main doprnt function to handle formatting of floating point
+values. The general process is:
+1. Check for non-numbers and just display the error code.
+2. Convert number to positive form.
+3. Normalise the number to lie in the range 1.0 <= number < 10.0
+4. Work out where the DP lies and optimum format.
+5. Output the digits in reverse order.
+--------------------------------------------------------------------------- */
 static char *format_float(double number, flt_width_t ndigits, flt_width_t width,
                           unsigned char flags, unsigned char fflags, char *buf)
 {
@@ -167,7 +184,7 @@ static char *format_float(double number, flt_width_t ndigits, flt_width_t width,
     char *pend;
     
 #ifndef NO_ISNAN_ISINF
-    // Handle special values
+    // Handle special values which need no formatting
     if (isinf(number))
     {
         buf[0] = 'I';
@@ -186,7 +203,7 @@ static char *format_float(double number, flt_width_t ndigits, flt_width_t width,
     }
 #endif
 
-    // Handle all numbers as positive.
+    // Handle all numbers as if they were positive.
     if (number < 0)
     {
         number = -number;
@@ -538,12 +555,20 @@ static char *format_float(double number, flt_width_t ndigits, flt_width_t width,
 
     return p;       // Start of string
 }
-#endif
+#endif  // End of floating point section
+
+/*****************************************************************************
+Integer, character and string
+******************************************************************************/
 
 #if FEATURE(USE_SPACE_PAD)
-// Helper function to find length of string.
-// This offers a small space saving over strlen and allows
-// for checking strings in flash.
+/* ---------------------------------------------------------------------------
+Function: p_len()
+Helper function to find length of string.
+This offers a small space saving over strlen and allows for reading strings
+from flash where the micro uses different semantics to access program memory.
+This is used on the AVR processor.
+--------------------------------------------------------------------------- */
 #if FEATURE(USE_FSTRING)
 static width_t p_len(char *p, unsigned char flags)
 #else
@@ -569,6 +594,13 @@ static width_t p_len(char *p)
 }
 #endif
 
+/* ---------------------------------------------------------------------------
+Function: doprnt()
+This is the main worker function which does all the formatting.
+The output function must always be provided.
+Unless BASIC_PRINTF is defined it also needs the context variable,
+which tells the output function where to write.
+--------------------------------------------------------------------------- */
 #ifdef BASIC_PRINTF_ONLY
 static printf_t doprnt(void (*func)(char c), const char *fmt, va_list ap)
 #else
@@ -671,14 +703,14 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
             }
 #if FEATURE(USE_SPACE_PAD) || FEATURE(USE_ZERO_PAD)
             // Extract width
-  #if FEATURE(USE_INDIRECT)
+    #if FEATURE(USE_INDIRECT)
             if (convert == '*')
             {
                 width = va_arg(ap, int);
                 convert = GET_FORMAT(++fmt);
             }
             else
-  #endif
+    #endif
             while (convert >= '0' && convert <= '9')
             {
                 width = width * 10 + convert - '0';
@@ -691,14 +723,14 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
             {
                 precision = 0;
                 convert = GET_FORMAT(++fmt);
-  #if FEATURE(USE_INDIRECT)
+    #if FEATURE(USE_INDIRECT)
                 if (convert == '*')
                 {
                     precision = va_arg(ap, int);
                     convert = GET_FORMAT(++fmt);
                 }
                 else
-  #endif
+    #endif
                 while (convert >= '0' && convert <= '9')
                 {
                     precision = precision * 10 + convert - '0';
@@ -726,9 +758,9 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
             {
 #if FEATURE(USE_CHAR)
             case 'c':
-  #if FEATURE(USE_SPACE_PAD)
+    #if FEATURE(USE_SPACE_PAD)
                 width = 0;
-  #endif
+    #endif
                 *--p = (char) va_arg(ap, int);
                 break;
 #endif
@@ -765,9 +797,9 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
             case 'X':
 #endif
 #if FEATURE(USE_HEX_LOWER) || FEATURE(USE_HEX_UPPER)
-  #if !HEX_CONVERT_ONLY
+    #if !HEX_CONVERT_ONLY
                 base = 16;
-  #endif
+    #endif
 #endif
 #if !HEX_CONVERT_ONLY
             number:
@@ -832,14 +864,14 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
 #endif
                 // Make sure options are valid.
 #if HEX_CONVERT_ONLY
-  #if FEATURE(USE_PLUS_SIGN) || FEATURE(USE_SPACE_SIGN)
+    #if FEATURE(USE_PLUS_SIGN) || FEATURE(USE_SPACE_SIGN)
                 flags &= ~(FL_PLUS|FL_SPACE);
-  #endif
+    #endif
 #else
                 if (base != 10) flags &= ~(FL_PLUS|FL_NEG|FL_SPACE);
-  #if FEATURE(USE_SPECIAL)
+    #if FEATURE(USE_SPECIAL)
                 else            flags &= ~FL_SPECIAL;
-  #endif
+    #endif
 #endif
                 // Generate the number without any prefix yet.
 #if FEATURE(USE_ZERO_PAD)
@@ -862,9 +894,9 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                 {
                     // Avoid printing 0 as ' '
                     *--p = '0';
-  #if FEATURE(USE_ZERO_PAD)
+    #if FEATURE(USE_ZERO_PAD)
                     --fwidth;
-  #endif
+    #endif
                 }
                 while (uvalue)
 #endif
@@ -878,14 +910,14 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                     if (c > '9')
                     {
                         // Hex digits
-  #if FEATURE(USE_HEX_LOWER) && FEATURE(USE_HEX_UPPER)
+    #if FEATURE(USE_HEX_LOWER) && FEATURE(USE_HEX_UPPER)
                         if (convert == 'X') c += 'A' - '0' - 10;
                         else                c += 'a' - '0' - 10;
-  #elif FEATURE(USE_HEX_UPPER) || FEATURE(USE_HEX_UPPER_L)
+    #elif FEATURE(USE_HEX_UPPER) || FEATURE(USE_HEX_UPPER_L)
                         c += 'A' - '0' - 10;
-  #else
+    #else
                         c += 'a' - '0' - 10;
-  #endif
+    #endif
                     }
 #endif
                     *--p = c;
@@ -904,14 +936,14 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
 #if FEATURE(USE_ZERO_PAD)
                 // Allocate space for the sign bit.
                 if (flags & (FL_PLUS|FL_NEG|FL_SPACE)) --fwidth;
-  #if FEATURE(USE_SPECIAL)
+    #if FEATURE(USE_SPECIAL)
                 // Allocate space for special chars if required.
                 if (flags & FL_SPECIAL)
                 {
                     if (convert == 'o') fwidth -= 1;
                     else fwidth -= 2;
                 }
-  #endif
+    #endif
                 // Add leading zero padding if required.
                 if ((flags & FL_ZERO_PAD) && !(flags & FL_LEFT_JUST))
                 {
@@ -968,11 +1000,11 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                 break;
 #endif
 #if FEATURE(USE_STRING)
-  #if FEATURE(USE_FSTRING)
+    #if FEATURE(USE_FSTRING)
             case 'S':
                 flags |= FL_FSTR;
                 // fall through
-  #endif
+    #endif
             case 's':
                 p = va_arg(ap, char *);
                 break;
@@ -984,20 +1016,20 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
 
 #if FEATURE(USE_SPACE_PAD)
             // Check width of formatted text.
-  #if FEATURE(USE_FSTRING)
+    #if FEATURE(USE_FSTRING)
             fwidth = p_len(p, flags);
-  #else
+    #else
             fwidth = p_len(p);
-  #endif
+    #endif
             // Copy formatted text with leading or trailing space.
             // A positive value for precision will limit the length of p used.
             for (;;)
             {
-  #if FEATURE(USE_FSTRING)
+    #if FEATURE(USE_FSTRING)
                 if (flags & FL_FSTR)
                     c = GET_FORMAT(p);
                 else
-  #endif
+    #endif
                 c = *p;
                 if ((c == '\0' || precision == 0) && width <= 0) break;
                 if (((flags & FL_LEFT_JUST) || width <= fwidth) && c && precision != 0) ++p;
@@ -1005,18 +1037,18 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
 #else
             for (;;)
             {
-  #if FEATURE(USE_FSTRING)
+    #if FEATURE(USE_FSTRING)
                 if (flags & FL_FSTR)
                     c = GET_FORMAT(p);
                 else
-  #endif
+    #endif
                 c = *p;
-  #if FEATURE(USE_PRECISION)
+    #if FEATURE(USE_PRECISION)
                 // A positive value for precision will limit the length of p used.
                 if (c == '\0' || precision == 0) break;
-  #else
+    #else
                 if (c == '\0') break;
-  #endif
+    #endif
                 ++p;
 #endif
 #ifdef BASIC_PRINTF_ONLY
@@ -1054,9 +1086,13 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
 #endif
 }
 
-// Output function for printf.
-// The context is not used at present, but could be extended to include
-// streams or to avoid output mixing in multi-threaded use.
+/* ---------------------------------------------------------------------------
+Function: putout()
+This is the output function used for printf.
+The context is normally required, but is not used at present. It could be
+extended to include streams or to avoid output mixing in multi-threaded use.
+If using BASIC_PRINTF, context is not supported.
+--------------------------------------------------------------------------- */
 #ifdef BASIC_PRINTF_ONLY
 static void putout(char c)
 {
@@ -1068,7 +1104,12 @@ static void putout(char c, void *context)
     PUTCHAR_FUNC(c);
 }
 
-// printf replacement - writes to serial output using putchar.
+/* ---------------------------------------------------------------------------
+Function: printf()
+Replacement for library printf - writes to output (normally serial)
+It uses the output function putout() to update the serial output.
+If PRINTF_T is defined then the number of characters generated is returned.
+--------------------------------------------------------------------------- */
 printf_t printf(const char *fmt, ...)
 {
     va_list ap;
@@ -1098,9 +1139,12 @@ printf_t printf(const char *fmt, ...)
 }
 
 #ifndef BASIC_PRINTF_ONLY
-// Output function for sprintf.
-// Here the context is a pointer to a pointer to the buffer.
-// Double indirection allows the function to increment the buffer pointer.
+/* ---------------------------------------------------------------------------
+Function: putbuf()
+This is the output function used for sprintf.
+Here the context is a pointer to a pointer to the buffer.
+Double indirection allows the function to increment the buffer pointer.
+--------------------------------------------------------------------------- */
 static void putbuf(char c, void *context)
 {
     char *buf = *((char **) context);
@@ -1108,7 +1152,13 @@ static void putbuf(char c, void *context)
     *((char **) context) = buf;
 }
 
-//  sprintf replacement - writes into buffer supplied.
+/* ---------------------------------------------------------------------------
+Function: sprintf()
+Replacement for library sprintf - writes into buffer supplied.
+Normally it uses the output function putout() to update the buffer.
+sprintf is not supported when using BASIC_PRINTF
+If PRINTF_T is defined then the number of characters generated is returned.
+--------------------------------------------------------------------------- */
 printf_t sprintf(char *buf, const char *fmt, ... )
 {
     va_list ap;
