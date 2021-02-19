@@ -775,25 +775,41 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
             number:
 #endif
                 /* Using separate va_arg() calls for signed and unsigned types is expensive.
-                   Instead, values are read as signed, regardless of signed/unsigned type.
-                   This can cause unwanted widening of unsigned values which have the MSB set,
+                   Instead, values are read as unsigned, regardless of signed/unsigned type.
+                   Signed values then need to be sign-extended
                    and this is fixed after the check for negative numbers.
                 */
 #if FEATURE(USE_LONG)
     #if FEATURE(USE_LONG_LONG)
                 if (fflags & FF_XLONG)
-                    uvalue = va_arg(ap, long long);
+                    uvalue = va_arg(ap, unsigned long long);
                 else
     #endif
                 if (flags & FL_LONG)
-                    uvalue = va_arg(ap, long);
+                    uvalue = va_arg(ap, unsigned long);
                 else
 #endif
-                    uvalue = va_arg(ap, int);
+                    uvalue = va_arg(ap, unsigned int);
 #if FEATURE(USE_SIGNED) || FEATURE(USE_SIGNED_I)
-                // Check for negative values
+                // FL_NEG was used temporarily to indicate signed type
                 if (flags & FL_NEG)
                 {
+                    // Values may need to be sign extended if not the widest type.
+    #if FEATURE(USE_LONG)
+        #if FEATURE(USE_LONG_LONG)
+                    if (!(fflags & FF_XLONG))
+                    {
+                        if (!(flags & FL_LONG))
+                            uvalue = (int) uvalue;
+                        else
+                            uvalue = (long) uvalue;
+                    }
+        #else
+                    if (!(flags & FL_LONG))
+                        uvalue = (int) uvalue;
+        #endif
+    #endif
+                    // Check whether this is a negative value
     #if FEATURE(USE_LONG)
         #if FEATURE(USE_LONG_LONG)
                     if ((long long) uvalue < 0)
@@ -811,24 +827,6 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                         flags &= ~FL_NEG;   // No, it's positive
                     }
                 }
-    #if FEATURE(USE_LONG)
-                // Avoid sign extension making unsigned variables too wide.
-                else
-                {
-        #if FEATURE(USE_LONG_LONG)
-                    if (!(fflags & FF_XLONG))
-                    {
-                        if (!(flags & FL_LONG))
-                            uvalue = (unsigned) uvalue;
-                        else
-                            uvalue = (unsigned long) uvalue;
-                    }
-        #else
-                    if (!(flags & FL_LONG))
-                        uvalue = (unsigned) uvalue;
-        #endif
-                }
-    #endif
 #endif
 #if FEATURE(USE_PRECISION)
                 // Set default precision
