@@ -7,7 +7,7 @@ and to generate AVR code for embedded testing.
 $Id$
 
 **************************************************************************
-Copyright (c) 2006 - 2015 Skirrid Systems
+Copyright (c) 2006 - 2021 Skirrid Systems
 
 Permission is hereby granted, free of charge, to any person obtaining a
 copy of this software and associated documentation files (the "Software"),
@@ -26,7 +26,7 @@ THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
-******************************************************************************/
+*************************************************************************/
 
 #if defined(TEST_AVR)
     // 8-bit AVR tests

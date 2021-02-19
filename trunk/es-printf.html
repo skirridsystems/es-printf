@@ -90,7 +90,7 @@
 <p class="right"><a href="#top">Top</a></p>
 <h2 id="files">es-printf files</h2>
 <p>
-    The distribution contains a number of files of which three are needed for a working
+    The distribution contains a number of files of which only the first three are needed for a working
     implementation. 
 </p>
 <table>
@@ -194,6 +194,7 @@
     <tr><th>Length</th><th>d i</th><th>u b o x X</th><th>f e E g G</th><th>c</th><th>s S</th></tr>
     <tr><td>(none)</td><td>int</td><td>unsigned int</td><td>double</td><td>int</td><td>char*</td></tr>
     <tr><td>l</td><td>long int</td><td>unsigned long int</td><td></td><td></td><td></td></tr>
+    <tr><td>ll</td><td>long long int</td><td>unsigned long long int</td><td></td><td></td><td></td></tr>
 </table>
 <p class="endsect">&nbsp;</p>
 
@@ -311,6 +312,11 @@
     <tr><td>USE_SPACE_SIGN</td><td>Allow use of the <a href="#flags">space flag</a> e.g. % d.</td></tr>
     <tr><td>USE_LEFT_JUST</td><td>Allow use of the <a href="#flags">left-justify flag</a> e.g. %-12s.</td></tr>
     <tr><td>USE_SPECIAL</td><td>Allow use of the <a href="#flags">special # flag</a> e.g. %#02x</td></tr>
+    <tr><td>USE_SMALL_FLOAT</td><td>Reduce the size of floating point code at the expense of longer execution time and greater rounding error.
+            Recommended only if you are really short of space</td></tr>
+    <tr><td>USE_LONG_LONG</td><td>Include support for long long integers (64-bit). Rarely needed for
+            embedded applications. If you are happy using hex output you can also print by splitting into two longs.
+            For AVR this option adds about 50% to the code size.</td></tr>
 </table>
 
 <h4>Pre-defined feature groups</h4>
@@ -325,6 +331,7 @@
     <tr><td>BASIC_INT</td><td>Signed and unsigned decimal, lowercase hex, zero and space padding.</td></tr>
     <tr><td>SHORT_INT</td><td>All short integer features except binary, octal, %i, indirection and specials.</td></tr>
     <tr><td>LONG_INT</td><td>As above, but also supports long integers.</td></tr>
+    <tr><td>LONG_LONG_INT</td><td>As above, but also supports long long integers.</td></tr>
     <tr><td>FULL_INT</td><td>All possible integer features.</td></tr>
     <tr><td>FULL_FLOAT</td><td>All available features including floating point.</td></tr>
 </table>
@@ -393,11 +400,26 @@
 <!-- ************************************************************************************ -->
 
 <p class="right"><a href="#top">Top</a></p>
+<h2 id="integrate">Upgrading</h2>
+<p>
+    If you are upgrading from a previous version, you will need to re-apply your customisations.
+    Note that if you previously used the FULL_INT or FULL_FLOAT summary config options,
+    these now include support for long long integers, which will increase code size.
+    If you don't need 64-bit support you should exclude it.
+</p>
+
+<p class="endsect">&nbsp;</p>
+
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+<!-- ************************************************************************************ -->
+
+<p class="right"><a href="#top">Top</a></p>
 <h2 id="test">Test code</h2>
 <p>
     The test code provided is mainly for development use to allow the code to be checked.
     If you are just integrating es-printf into your own application you won't need this part.
-    It does several things.
+    It does several things:
 </p>
 <ol>
     <li>It produces an executable to run on PC or
@@ -414,10 +436,9 @@
     The PC test code uses the gcc compiler which is assumed to be in the default path.
 </p>
 <p>
-    The AVR test code uses WinAVR-20100110 compiler which is assumed to be at its default
-    installation location. More recent versions are shipped as part of Atmel Studio and
-    are located in the Program Files directory. You would need to adjust the paths in the
-    makefile to cope with this.
+    The AVR test code uses compiler shipping with Atmel Studio 7, which is assumed to be
+    at its default installation location. You may need to adjust the paths in the
+    makefile to handle your installation.
 </p>
 <p>
     The STM8 test code is built using the Raisonance Ride7 IDE. You need to load the .rprj
@@ -437,32 +458,27 @@
     using some of the pre-defined feature groups.
 </p>
 <p>
-    The size is derived by comparing a build with a single call to printf and an empty format
-    string to a build without that call. For real-world use you will need to add the overhead
-    of making real calls to printf, which includes the length of the format string itself and
-    the overhead of pushing the values onto the stack.
+    The size is determined by looking at the function size in the map file, so it does not
+    include the overhead of library functions used within the code. These are only simple
+    maths functions, so it is likely your own code will already be pulling these in.
 </p>
 <p>
-    All values were checked using WinAVR-20100110 with no return value from printf,
-    except where stated.
-</p>
-<p>
-    The floating point figure also covers the size of floating point libraries.
-    If you are using the floating point version of printf then presumably you
-    are already using floating point in your code anyway, so some of those libraries
-    will already be in your code. A similar argument applies to long integer support.
+    All values were checked using the AVR8 toolchain from Atmel Studio with no return value
+    from printf, except where stated.
 </p>
 <table>
     <tr><th>Config</th><th>Size in bytes</th></tr>
-    <tr><td>HEX_INT + BASIC_PRINTF_ONLY</td><td>200</td></tr>
-    <tr><td>MINIMAL_INT + BASIC_PRINTF_ONLY</td><td>358</td></tr>
-    <tr><td>BASIC_INT + BASIC_PRINTF_ONLY</td><td>590</td></tr>
-    <tr><td>BASIC_INT</td><td>628</td></tr>
-    <tr><td>SHORT_INT</td><td>810</td></tr>
-    <tr><td>SHORT_INT (with short int return)</td><td>834</td></tr>
-    <tr><td>LONG_INT</td><td>1032</td></tr>
-    <tr><td>FULL_INT</td><td>1278</td></tr>
-    <tr><td>FULL_FLOAT</td><td>3916</td></tr>
+    <tr><td>HEX_INT + BASIC_PRINTF_ONLY</td><td>146</td></tr>
+    <tr><td>MINIMAL_INT + BASIC_PRINTF_ONLY</td><td>272</td></tr>
+    <tr><td>BASIC_INT + BASIC_PRINTF_ONLY</td><td>458</td></tr>
+    <tr><td>BASIC_INT</td><td>552</td></tr>
+    <tr><td>SHORT_INT</td><td>726</td></tr>
+    <tr><td>SHORT_INT (with short int return)</td><td>746</td></tr>
+    <tr><td>LONG_INT</td><td>864</td></tr>
+    <tr><td>LONG_LONG_INT</td><td>1218</td></tr>
+    <tr><td>FULL_INT</td><td>1456</td></tr>
+    <tr><td>FULL_FLOAT + USE_SMALL_FLOAT</td><td>2420</td></tr>
+    <tr><td>FULL_FLOAT</td><td>2618</td></tr>
 </table>
 
 <p class="endsect">&nbsp;</p>
@@ -484,7 +500,7 @@
 </p>
 <hr />
 <p>
-    Copyright &copy; 2006 - 2015 Skirrid Systems
+    Copyright &copy; 2006 - 2021 Skirrid Systems
 </p>
 <p>
     Permission is hereby granted, free of charge, to any person obtaining a
