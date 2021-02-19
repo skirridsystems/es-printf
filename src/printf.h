@@ -54,16 +54,16 @@ Memory access definitions
 Some micros such as the AVR can only support storing strings in flash
 memory by wrapping the string in a macro. To make this transparent we can
 define the printf function itself as a macro which performs the wrap and
-calls a renamed version of printf with a _rom suffix.
+calls a renamed version of printf with an _ suffix and no i.
 *************************************************************************/
 
 /* Example for AVR micros using WinAVR (GCC) compiler
 
-#define sprintf(buf, format, args...)   sprintf_rom(buf, PSTR(format), ## args)
-#define printf(format, args...)         printf_rom(PSTR(format), ## args)
+#define sprintf(buf, format, args...)   _sprntf(buf, PSTR(format), ## args)
+#define printf(format, args...)         _prntf(PSTR(format), ## args)
 
-extern printf_t sprintf_rom(char *, const char *, ...);
-extern printf_t printf_rom(const char *, ...);
+extern printf_t _sprntf(char *, const char *, ...);
+extern printf_t _prntf(const char *, ...);
 */
 
 /*************************************************************************

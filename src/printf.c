@@ -46,12 +46,12 @@ DEALINGS IN THE SOFTWARE.
 /* Renames the functions if they have been defined as macros in printf.h */
 #ifdef printf
     #undef  printf
-    #define printf printf_rom
+    #define printf _prntf
 #endif
 
 #ifdef sprintf
     #undef  sprintf
-    #define sprintf sprintf_rom
+    #define sprintf _sprntf
 #endif
 
 // Macro used to check presence of a feature flag.
