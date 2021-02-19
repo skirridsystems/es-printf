@@ -263,7 +263,7 @@ int main(int argc, char *argv[])
     tprintf("B32 %lb %032lb\n", B32, B32);
     #endif
     #if FEATURE(USE_LONG_LONG)
-    tprintf("B64 %llb %064llb\n", B64, B64);
+    tprintf("B64 %llb %032llb\n", B64, B64);
     #endif
   #endif
   #if FEATURE(USE_STRING)

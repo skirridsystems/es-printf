@@ -60,9 +60,7 @@ DEALINGS IN THE SOFTWARE.
 
 // Size of buffer for formatting numbers into
 #if FEATURE(USE_BINARY)
-    #if FEATURE(USE_LONG_LONG)
-        #define BUFMAX  64
-    #elif FEATURE(USE_LONG)
+    #if FEATURE(USE_LONG)
         #define BUFMAX  32
     #elif FEATURE(USE_FLOAT)
         #define BUFMAX  30
@@ -848,6 +846,14 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                 fwidth = width;
                 // Avoid formatting buffer overflow.
                 if (fwidth > BUFMAX) fwidth = BUFMAX;
+#endif
+#if FEATURE(USE_LONG_LONG) && FEATURE(USE_BINARY)
+                // 64-bit binary output is impractical for reading and requires a huge buffer.
+                // Restrict to 32 bits in binary mode.
+                if ((base == 2) && (fflags & FF_XLONG))
+                {
+                    uvalue = (unsigned long) uvalue;
+                }
 #endif
 #if FEATURE(USE_PRECISION)
                 while (uvalue || precision > 0)
