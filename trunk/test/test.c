@@ -100,22 +100,22 @@ DEALINGS IN THE SOFTWARE.
     /* In the AVR test environment define a new macro to use our function
        with strings in flash.
     */
-    #define tprintf(format, args...)        printf_rom(PSTR(format), ## args)
+    #define tprintf(format, args...)        _prntf(PSTR(format), ## args)
   #ifdef BASIC_PRINTF_ONLY
-    #define tsprintf(buf, format, args...)  printf_rom(PSTR(format), ## args)
+    #define tsprintf(buf, format, args...)  _prntf(PSTR(format), ## args)
   #else
-    #define tsprintf(buf, format, args...)  sprintf_rom(buf, PSTR(format), ## args); printf_rom(PSTR("%s"), buf)
+    #define tsprintf(buf, format, args...)  _sprntf(buf, PSTR(format), ## args); _prntf(PSTR("%s"), buf)
   #endif
 #elif defined(TEST_STM8)
     /* In the STM8 test environment the macros only have to call our functions.
        The Raisonance compiler does not support the ## args extension so revert
        to the less flexible __VA_ARGS__ instead.
     */
-    #define tprintf(...)                    printf_rom(__VA_ARGS__)
+    #define tprintf(...)                    _prntf(__VA_ARGS__)
   #ifdef BASIC_PRINTF_ONLY
-    #define tsprintf(buf, ...)              printf_rom(__VA_ARGS__)
+    #define tsprintf(buf, ...)              _prntf(__VA_ARGS__)
   #else
-    #define tsprintf(buf, ...)              sprintf_rom(buf, __VA_ARGS__)
+    #define tsprintf(buf, ...)              _sprntf(buf, __VA_ARGS__)
   #endif
 #else
     /* In the PC test environment reinstate printf to call the normal library function.
@@ -126,16 +126,16 @@ DEALINGS IN THE SOFTWARE.
     #define COMPARE_TEST
     #define tprintf(format, args...)        do { sprintf(stdbuf, format, ## args);  \
                                                  testinit();                        \
-                                                 printf_rom(format, ## args);       \
+                                                 _prntf(format, ## args);       \
                                                  testcompare(); } while(0)
   #ifdef BASIC_PRINTF_ONLY
     #define tsprintf(buf, format, args...)  do { sprintf(stdbuf, format, ## args);  \
                                                  testinit();                        \
-                                                 printf_rom(format, ## args);       \
+                                                 _prntf(format, ## args);       \
                                                  testcompare(); } while(0)
   #else
     #define tsprintf(buf, format, args...)  do { sprintf(stdbuf, format, ## args);  \
-                                                 sprintf_rom(testbuf, format, ## args); \
+                                                 _sprntf(testbuf, format, ## args); \
                                                  testcompare(); } while(0)
   #endif
 #endif

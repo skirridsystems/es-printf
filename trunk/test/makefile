@@ -123,7 +123,8 @@ $(SOUTN)/$(STRGN).elf: $(SOBJN)
 	$(CC) $(SOBJN) $(LIB) $(LDFLAGS) -o $@
 	$(AVRSIZE) $(SOUT)/$(STRG).elf
 	$(AVRSIZE) $@
-	grep doprnt $(SOUT)/$(STRG).map
+	-grep \.doprnt $(SOUT)/$(STRG).map
+	-grep \._prntf $(SOUT)/$(STRG).map
 
 # Generate PC executable
 $(TRG).exe: $(TEST_SRC) $(PRINTF_INC) makefile
