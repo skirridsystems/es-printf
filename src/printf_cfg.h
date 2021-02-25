@@ -3,7 +3,7 @@ es-printf  -  configurable printf for embedded systems
 
 print_cfg.h: Select the build options for printf functions.
 
-$Id$
+https://github.com/skirridsystems/es-printf
 
 **************************************************************************
 Copyright (c) 2006 - 2021 Skirrid Systems
