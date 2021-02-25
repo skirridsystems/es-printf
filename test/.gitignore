@@ -1,0 +1,7 @@
+AVR_*
+STM8_*
+*.hex
+*.ctx
+*.dbi
+*.xdb
+*.exe
