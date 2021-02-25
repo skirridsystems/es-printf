@@ -1,4 +1,4 @@
-# Introduction to es-printf #
+# es-printf :: Embedded Systems Printf #
 
 es-printf is an implementation of the standard C printf function targetted
 at small embedded systems with very restricted code and data space.
@@ -19,4 +19,4 @@ or to anything else convenient.
 1. Because the source code is available it is easy to extend the
 formatter to provide custom specifiers for your particular needs.
 
-Full documentation is provided in [es-printf.html](docs/es-printf.html)
+Full documentation is provided in [es-printf.html](https://htmlpreview.github.io/?https://github.com/skirridsystems/es-printf/blob/master/docs/es-printf.html)

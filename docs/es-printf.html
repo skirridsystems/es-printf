@@ -90,8 +90,7 @@
 <p class="right"><a href="#top">Top</a></p>
 <h2 id="files">es-printf files</h2>
 <p>
-    The distribution contains a number of files of which only the first three are needed for a working
-    implementation. 
+    es-printf requires only three files for a working implementation. 
 </p>
 <table>
     <tr><th>File</th><th>Description</th></tr>
@@ -101,10 +100,6 @@
             Some configuration options are required here.</td></tr>
     <tr><td>printf_cfg.h</td><td>Include file used to configure printf.c.<br />
             This file defines what features are supported by printf functions.</td></tr>
-    <tr><td>test.c</td><td>A set of tests used to check the performance of es-printf
-            against the standard library form, and to build versions for AVR to check
-            performance and code space.</td></tr>
-    <tr><td>makefile</td><td>makefile used to build the test images.</td></tr>
 </table>
 <p class="endsect">&nbsp;</p>
 
@@ -149,10 +144,10 @@
 <table id="flags">
     <tr><th>Flags</th><th>Description</th></tr>
     <tr><td>-</td><td>Left-justify within the given field width (right is the default)</td></tr>
-    <tr><td>+</td><td>Always output a preceeding plus or minus sign (+ or -) even for positive numbers.
+    <tr><td>+</td><td>Always output a preceding plus or minus sign (+ or -) even for positive numbers.
             By default, only negative numbers are preceded with a - sign.</td></tr>
     <tr><td>(space)</td><td>If no minus sign is needed, output a space before the value.</td></tr>
-    <tr><td>#</td><td>Used with o, b, x or X specifiers the value is preceeded with 0, 0b, 0x or 0X
+    <tr><td>#</td><td>Used with o, b, x or X specifiers the value is preceded with 0, 0b, 0x or 0X
             respectively.<br />
             Used with e, E, f, g or G it forces the output to contain a decimal point even if
             no more digits follow. By default, if no digits follow, no decimal point is written.</td></tr>
@@ -169,7 +164,7 @@
 </table>
 
 <table id="precision">
-    <tr><th>.Precision</th><th>Description</th></tr>
+    <tr><th>Precision</th><th>Description</th></tr>
     <tr><td>.number</td><td>For integer specifiers (d, i, u, b, o, x, X): precision specifies the
             minimum number of digits to be written. If the value to be written is shorter than
             this number, the result is padded with leading zeros. The value is not truncated
