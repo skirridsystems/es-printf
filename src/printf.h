@@ -41,13 +41,6 @@ are sure the total output width will never exceed 255, or unsigned short.
 
 #define PRINTF_T unsigned short
 
-// Create a type definition for the return value
-#ifndef PRINTF_T
-typedef void printf_t;
-#else
-typedef PRINTF_T printf_t;
-#endif
-
 /*************************************************************************
 Memory access definitions
 
@@ -57,7 +50,8 @@ define the printf function itself as a macro which performs the wrap and
 calls a renamed version of printf with an _ suffix and no i.
 *************************************************************************/
 
-/* Example for AVR micros using WinAVR (GCC) compiler
+/*
+Example for AVR micros using GCC toolchain from WinAVR or Atmel Studio
 
 #define sprintf(buf, format, args...)   _sprntf(buf, PSTR(format), ## args)
 #define printf(format, args...)         _prntf(PSTR(format), ## args)
@@ -66,13 +60,22 @@ extern printf_t _sprntf(char *, const char *, ...);
 extern printf_t _prntf(const char *, ...);
 */
 
-/*************************************************************************
-Standard declarations
 
-These are the declarations for the standard functions, unless overridden
-by the memory access macros above.
+
+/*************************************************************************
+End of customisations - Stop Editing!
+
+The remainder of this file contains the function declarations.
 *************************************************************************/
 
+// Create a type definition for the return value
+#ifndef PRINTF_T
+typedef void printf_t;
+#else
+typedef PRINTF_T printf_t;
+#endif
+
+// Function declarations, unless macros have been defined above
 #ifndef printf
 extern printf_t printf(const char *, ...);
 #endif

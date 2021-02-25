@@ -54,7 +54,8 @@ format string. By default this does a normal memory pointer access, but
 you can configure it to access flash memory if needed.
 *************************************************************************/
 
-/* Example for AVR micros using WinAVR (GCC) compiler
+/*
+Example for AVR micros using GCC toolchain from WinAVR or Atmel Studio
 
 #include <avr/io.h>
 #include <avr/pgmspace.h>
@@ -101,9 +102,58 @@ Note that a signed type is required.
 typedef signed char width_t;
 
 /*************************************************************************
+Features included in your build of printf. Use only the features you need
+to keep code size and execution time to a minimum.
+
+You can use the custom set, with anything you don't want commented out,
+or you can use one of the pre-defined sets.
+
+Examples:
+
+#define FEATURE_FLAGS   CUSTOM_SET
+#define FEATURE_FLAGS   SHORT_INT
+
+Features and pre-defined sets are set out in the following sections.
+*************************************************************************/
+
+// Custom feature set. Comment out features you don't want.
+#define CUSTOM_SET ( 0 \
+        | USE_FLOAT       \
+        | USE_LONG        \
+        | USE_BINARY      \
+        | USE_OCTAL       \
+        | USE_SIGNED      \
+        | USE_SIGNED_I    \
+        | USE_UNSIGNED    \
+        | USE_HEX_LOWER   \
+        | USE_HEX_UPPER   \
+        | USE_HEX_UPPER_L \
+        | USE_CHAR        \
+        | USE_STRING      \
+        | USE_FSTRING     \
+        | USE_PRECISION   \
+        | USE_ZERO_PAD    \
+        | USE_SPACE_PAD   \
+        | USE_INDIRECT    \
+        | USE_PLUS_SIGN   \
+        | USE_SPACE_SIGN  \
+        | USE_LEFT_JUST   \
+        | USE_SPECIAL     \
+        | USE_SMALL_FLOAT \
+        | USE_LONG_LONG   \
+)
+
+#define FEATURE_FLAGS   SHORT_INT
+
+/*************************************************************************
+End of customisations - Stop Editing!
+*************************************************************************/
+
+
+/*************************************************************************
 Feature configuration
 
-This section defines the various feature flags.
+This section defines the individual feature flags.
 These are combined as needed to produce the FEATURE_FLAGS macro.
 *************************************************************************/
 
@@ -143,6 +193,8 @@ These are combined as needed to produce the FEATURE_FLAGS macro.
 #define USE_STRING      (1<<10)
 
 // Include support for %S string in flash memory
+// Only needed for architectures which cannot access program memory using normal pointers.
+// If you have not defined the GET_FORMAT() macro above then you don't need this option.
 #define USE_FSTRING     (1<<11)
 
 // Include support for %b binary specifier
@@ -186,7 +238,7 @@ Pre-defined feature sets
 This section provides some commonly used combinations of features.
 *************************************************************************/
 
-// Lowercase hex integers only.
+// Lowercase hex integers only. This really is the bare minimum.
 #define HEX_INT ( \
         USE_HEX_LOWER )
 
@@ -222,35 +274,5 @@ This section provides some commonly used combinations of features.
 // All available features including floating point.
 #define FULL_FLOAT ( \
         USE_FLOAT | FULL_INT )
-
-// Custom feature set. Comment out features you don't want.
-#define CUSTOM_SET ( \
-        USE_FLOAT       \
-        USE_LONG        \
-        USE_BINARY      \
-        USE_OCTAL       \
-        USE_SIGNED      \
-        USE_SIGNED_I    \
-        USE_UNSIGNED    \
-        USE_HEX_LOWER   \
-        USE_HEX_UPPER   \
-        USE_HEX_UPPER_L \
-        USE_CHAR        \
-        USE_STRING      \
-        USE_FSTRING     \
-        USE_PRECISION   \
-        USE_ZERO_PAD    \
-        USE_SPACE_PAD   \
-        USE_INDIRECT    \
-        USE_PLUS_SIGN   \
-        USE_SPACE_SIGN  \
-        USE_LEFT_JUST   \
-        USE_SPECIAL     \
-        USE_SMALL_FLOAT \
-        USE_LONG_LONG   \
-)
-
-// Current feature set. Use a pre-defined set or define your own.
-#define FEATURE_FLAGS   FULL_INT
 
 #endif
