@@ -4,13 +4,14 @@ Changelog for es-printf
 This is just a summary of the main changes in each released version.
 For detailed changes please check version history in the repository.
 
-Version 1.2 - 19 Feb 2021
+Version 1.2 - 27 Feb 2021
 * Added support for long long type (64-bit integer).
 * Added smaller floating point option.
 * Fixed buffer overflow with 32-bit binary output.
 * Further code size reduction.
 * Added more test cases.
 * Code size table now uses actual code size of printf.
+* Clean up test code.
 
 Version 1.1 - 01 Aug 2015
 * Fixed several formatting bugs in floating point.
