@@ -4,7 +4,7 @@ es-printf  -  configurable printf for embedded systems
 Test program to compare output with the standard library function
 and to generate AVR code for embedded testing.
 
-$Id$
+https://github.com/skirridsystems/es-printf
 
 **************************************************************************
 Copyright (c) 2006 - 2021 Skirrid Systems
@@ -28,20 +28,24 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 DEALINGS IN THE SOFTWARE.
 *************************************************************************/
 
+// Include header files appropriate to the tests being run.
+// Also define the output function here.
 #if defined(TEST_AVR)
     // 8-bit AVR tests
     #include "../src/printf.h"
     #include <avr/io.h>
     #include <avr/pgmspace.h>
-    #define GET_FORMAT(p)   pgm_read_byte(p)
-  #ifdef SIZE
-    void outchar(char c) {}
-  #else
-    // Real output functions for ATMega running at 8MHz.
     #define F_CPU       8000000
+    #include <util/delay.h>
+
+    #define GET_FORMAT(p)   pgm_read_byte(p)
+    #define PUTCHAR_FUNC    outchar
+    #define NO_DOUBLE_PRECISION
+
+    // Real output functions for ATMega running at 8MHz.
     #define BAUD_RATE   19200
     #define BAUD_RELOAD     (F_CPU / 8 / BAUD_RATE - 1)
-    #include <util/delay.h>
+
     void outchar(char c)
     {
         while (!(UCSRA & (1<<UDRE)))
@@ -58,16 +62,15 @@ DEALINGS IN THE SOFTWARE.
         _delay_ms(100);
         outchar('\n');
     }
-  #endif
-    #define PUTCHAR_FUNC    outchar
-    #define NO_DOUBLE_PRECISION
 #elif defined(TEST_STM8)
     // STM8 tests
     #include "../src/printf.h"
-    void outchar(char c) { (void) c; }
     #define PUTCHAR_FUNC    outchar
     #define NO_DOUBLE_PRECISION
     #define NO_ISNAN_ISINF
+
+    void outchar(char c) { (void) c; }
+    void outinit(void) {}
 #else
     // PC tests
     #include <stdio.h>
@@ -75,15 +78,16 @@ DEALINGS IN THE SOFTWARE.
     // The PC library version always produces 3-digit exponents.
     // Force the same thing in our code to make comparison easier.
     #define EXP_3_DIGIT
+    #define PUTCHAR_FUNC    testchar
+
     // Redefine our printf output function.
     static void testchar(char c);
-    #define PUTCHAR_FUNC    testchar
+    void outinit(void) {}
 #endif
-    #include "float.h"
+
+#include "float.h"
 
 // The next section pulls in the real printf code.
-// Exclude this for the test version with no printf included.
-#if !(defined(SIZE) && defined(SIZEN))
 
 /* Force printf.c to rename the functions so we can use both
    the standard library and our own version for side-by-side tests.
@@ -140,27 +144,7 @@ DEALINGS IN THE SOFTWARE.
   #endif
 #endif
 
-#endif  // !(defined(SIZE) && defined(SIZEN))
-
-#ifdef SIZE
-/* This variant is used only to determine the compiled size.
-   It calls the printf function with an empty format string.
-   The SIZEN option builds the same output file but without
-   the printf function. By subtracting the two values we can
-   arrive at a compiled output size including any library
-   functions which are required.
-*/
-int main(int argc, char *argv[])
-{
-  #ifndef SIZEN
-    tprintf("");
-  #endif
-    (void) argc;    // Suppress compiler warning about unused arguments.
-    (void) argv;
-    return 0;
-}
-#else   // ifdef SIZE
-/* This variant is used to test the output with a variety of
+/* The main test code is used to check the output with a variety of
    different format strings and output types.
    The PC version is used to check that the output of our printf
    function matches the output of the standard library function.
@@ -225,9 +209,7 @@ int main(int argc, char *argv[])
     double one = 1.0;
 #endif
 
-#if defined(TEST_AVR)
     outinit();
-#endif
 
 #ifdef COMPARE_TEST
     // Show the output order
@@ -338,4 +320,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-#endif  // ifdef SIZE

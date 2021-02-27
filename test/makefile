@@ -3,10 +3,10 @@
 #
 # Makefile for testing on a PC and AVR
 #
-# $Id$
+# https://github.com/skirridsystems/es-printf
 #
 #*************************************************************************
-# Copyright (c) 2006 - 2015 Skirrid Systems
+# Copyright (c) 2006 - 2021 Skirrid Systems
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -30,8 +30,6 @@
 # Define the main target to build
 MCU = atmega8
 TRG = Test
-STRG = Size
-STRGN = SizeN
 TEST_SRC = test.c
 PRINTF_SRC = printf.c printf.h printf_cfg.h
 PRINTF_DIR = ../src
@@ -39,6 +37,7 @@ PRINTF_DIR = ../src
 # Tool chain used for this project.
 # AVRGCC = /winavr-20100110
 AVRGCC = "C:/Program Files (x86)/Atmel/Studio/7.0/toolchain/avr8/avr8-gnu-toolchain"
+MSYS = C:/msys64/usr
 
 # Tool chain used for the PC test version
 PC_GCC = gcc
@@ -47,10 +46,8 @@ PC_GCC = gcc
 
 # Tools and directories
 OUT     = AVR_out
-SOUT    = AVR_size
-SOUTN   = AVR_sizeN
 CC      = $(AVRGCC)/bin/avr-gcc
-RM      = $(AVRGCC)/utils/bin/rm -rf
+RM      = $(MSYS)/bin/rm -rf
 HEX     = $(AVRGCC)/bin/avr-objcopy
 LIBDIR  = $(AVRGCC)/avr/lib
 AVRSIZE = $(AVRGCC)/bin/avr-size
@@ -72,59 +69,36 @@ PRINTF_INC = $(addprefix $(PRINTF_DIR)/,$(PRINTF_SRC))
 
 # Derive all project specific object files
 OBJ = $(addprefix $(OUT)/,$(TEST_SRC:.c=.o))
-SOBJ = $(addprefix $(SOUT)/,$(TEST_SRC:.c=.o))
-SOBJN = $(addprefix $(SOUTN)/,$(TEST_SRC:.c=.o))
 
 #-----------------------------------------------------------------
 
 # Implicit rules for creating object from source.
 $(OUT)/%.o : %.c makefile $(PRINTF_INC)
 	$(CC) -c $(CPFLAGS) -I. $*.c -o $@
-$(SOUT)/%.o : %.c makefile $(PRINTF_INC)
-	$(CC) -c $(CPFLAGS) -DSIZE -I. $*.c -o $@
-$(SOUTN)/%.o : %.c makefile $(PRINTF_INC)
-	$(CC) -c $(CPFLAGS) -DSIZE -DSIZEN -I. $*.c -o $@
 
 #-----------------------------------------------------------------
 # This section defines the aims of the make process
 
-all: $(TRG).exe $(TRG).hex $(SOUT)/$(STRG).elf $(SOUTN)/$(STRGN).elf
+all: $(TRG).exe $(TRG).hex
 
 test: $(TRG).exe
 	./$(TRG).exe
 
 # Make sure the output directory exists
 $(OBJ): | $(OUT)
-$(SOBJ): | $(SOUT)
-$(SOBJN): | $(SOUTN)
 
 $(OUT):
 	mkdir -p $@
-$(SOUT):
-	mkdir -p $@
-$(SOUTN):
-	mkdir -p $@
 
 $(TRG).hex: $(OUT)/$(TRG).elf
-	$(HEX) -O ihex $^ $@
-
-$(STRG).hex: $(SOUT)/$(STRG).elf
 	$(HEX) -O ihex $^ $@
 
 # Link main app object files into an ELF output file.
 $(OUT)/$(TRG).elf: $(OBJ)
 	$(CC) $(OBJ) $(LIB) $(LDFLAGS) -o $@
 	$(AVRSIZE) $@
-
-$(SOUT)/$(STRG).elf: $(SOBJ)
-	$(CC) $(SOBJ) $(LIB) $(LDFLAGS) -o $@
-
-$(SOUTN)/$(STRGN).elf: $(SOBJN)
-	$(CC) $(SOBJN) $(LIB) $(LDFLAGS) -o $@
-	$(AVRSIZE) $(SOUT)/$(STRG).elf
-	$(AVRSIZE) $@
-	-grep \.doprnt $(SOUT)/$(STRG).map
-	-grep \._prntf $(SOUT)/$(STRG).map
+	-grep \.doprnt $(OUT)/$(TRG).map
+	-grep \._prntf $(OUT)/$(TRG).map
 
 # Generate PC executable
 $(TRG).exe: $(TEST_SRC) $(PRINTF_INC) makefile
