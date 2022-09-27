@@ -111,9 +111,11 @@ Floating point
 
 // Most compilers can support double precision
 #ifndef NO_DOUBLE_PRECISION
+  #define DP_LIMIT      310
   #define MAX_POWER     256
   #define FLOAT_DIGITS  17
 #else
+  #define DP_LIMIT      40
   #define MAX_POWER     32
   #define FLOAT_DIGITS  8
 #endif
@@ -255,6 +257,17 @@ static char *format_float(double number, flt_width_t ndigits, flt_width_t width,
         {
             number /= 10.0;
             ++decpt;
+#ifdef NO_ISNAN_ISINF
+            // Avoid this loop hanging on infinity.
+            if (decpt > DP_LIMIT)
+            {
+                buf[0] = 'I';
+                buf[1] = 'n';
+                buf[2] = 'f';
+                buf[3] = '\0';
+                return buf;
+            }
+#endif
         }
 #else
         /* Normalise using a binary search, making the largest possible
@@ -285,8 +298,9 @@ static char *format_float(double number, flt_width_t ndigits, flt_width_t width,
             {
                 number /= largetable[i];
                 decpt += power10;
+#ifdef NO_ISNAN_ISINF
                 // Avoid this loop hanging on infinity.
-                if (decpt > 1000)
+                if (decpt > DP_LIMIT)
                 {
                     buf[0] = 'I';
                     buf[1] = 'n';
@@ -294,6 +308,7 @@ static char *format_float(double number, flt_width_t ndigits, flt_width_t width,
                     buf[3] = '\0';
                     return buf;
                 }
+#endif
             }
             power10 >>= 1;
             i++;
@@ -652,7 +667,7 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
 #if FEATURE(USE_PRECISION) || FEATURE(USE_FLOAT)
             precision = -1;
 #endif
-#if FEATURE(USE_SPACE_PAD) || FEATURE(USE_ZERO_PAD)
+#if FEATURE(USE_SPACE_PAD) || FEATURE(USE_ZERO_PAD) || FEATURE(USE_FLOAT)
             width = 0;
 #endif
 #if FEATURE(USE_FLOAT) || FEATURE(USE_LONG_LONG)
@@ -711,6 +726,7 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
             }
             else
     #endif
+            // cppcheck-suppress knownConditionTrueFalse    // False positive
             while (convert >= '0' && convert <= '9')
             {
                 width = width * 10 + convert - '0';
@@ -1034,6 +1050,7 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                 if ((c == '\0' || precision == 0) && width <= 0) break;
                 if (((flags & FL_LEFT_JUST) || width <= fwidth) && c && precision != 0) ++p;
                 else c = ' ';
+                // for loop continues after #endif
 #else
             for (;;)
             {
@@ -1050,7 +1067,9 @@ static printf_t doprnt(void *context, void (*func)(char c, void *context), const
                 if (c == '\0') break;
     #endif
                 ++p;
+                // for loop continues after #endif
 #endif
+                // for loop continues here from either of the USE_SPACE_PAD cases.
 #ifdef BASIC_PRINTF_ONLY
                 func(c);            // Basic output function.
 #else

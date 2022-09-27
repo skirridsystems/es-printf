@@ -10,4 +10,7 @@
     <paths>
         <dir name="src"/>
     </paths>
+    <suppressions>
+        <suppression>unusedFunction</suppression>
+    </suppressions>
 </project>
